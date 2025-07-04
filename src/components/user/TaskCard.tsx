@@ -85,30 +85,34 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
 
   return (
     <Card className={cn(
-      "flex flex-col text-center items-center p-6 space-y-4 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1",
-      color,
-      "text-white"
+        "p-0 overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1"
     )}>
-      <Icon className="h-12 w-12 text-white/80" />
-      <div className="flex-grow">
-          <h3 className="font-headline text-lg">{title}</h3>
-          <p className="text-sm text-white/70">{description}</p>
-      </div>
-      <div className="bg-white/20 rounded-full px-4 py-1 text-sm font-bold">
-        {points} Points
-      </div>
-       <div className="w-full pt-2">
-        {isDisabled ? (
-            <Button disabled className="w-full bg-white/20 text-white/70 backdrop-blur-sm">
-                <Timer className="mr-2 h-4 w-4" />
-                {formatTime(timeLeft)}
-            </Button>
-            ) : (
-            <Button onClick={handleTaskComplete} className="w-full bg-white text-primary font-bold hover:bg-white/90">
-                {actionText}
-            </Button>
-        )}
-       </div>
+        <div className={cn(
+            "flex flex-col text-center items-center p-6 space-y-4 h-full",
+            color,
+            "text-white"
+        )}>
+            <Icon className="h-12 w-12 text-white/80" />
+            <div className="flex-grow">
+                <h3 className="font-headline text-lg">{title}</h3>
+                <p className="text-sm text-white/70">{description}</p>
+            </div>
+            <div className="bg-white/20 rounded-full px-4 py-1 text-sm font-bold">
+              {points} Points
+            </div>
+             <div className="w-full pt-2">
+              {isDisabled ? (
+                  <Button disabled className="w-full bg-white/20 text-white/70 backdrop-blur-sm">
+                      <Timer className="mr-2 h-4 w-4" />
+                      {formatTime(timeLeft)}
+                  </Button>
+                  ) : (
+                  <Button onClick={handleTaskComplete} className="w-full bg-white text-primary font-bold hover:bg-white/90">
+                      {actionText}
+                  </Button>
+              )}
+             </div>
+        </div>
     </Card>
   );
 }
