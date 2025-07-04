@@ -17,10 +17,22 @@ import type { LucideProps } from 'lucide-react';
 import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
-import { Calendar, HeartCrack, VenetianMask, RotateCw, PlusCircle, Coins, Gift, Dices } from 'lucide-react';
+import { Calendar, HeartCrack, VenetianMask, RotateCw, PlusCircle, Coins, Gift, Dices, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AddTaskDialog } from './AddTaskDialog';
-import { updateTask, addTask } from '@/lib/storage';
+import { updateTask, addTask, deleteTask } from '@/lib/storage';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from '@/hooks/use-toast';
+
 
 const iconMap: { [key: string]: React.ComponentType<LucideProps> } = {
   Calendar,
@@ -38,6 +50,9 @@ interface TaskTableProps {
 
 export function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
   const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = React.useState(false);
+  const [isAlertOpen, setIsAlertOpen] = React.useState(false);
+  const [taskToDelete, setTaskToDelete] = React.useState<Task | null>(null);
+  const { toast } = useToast();
 
   const handleEnabledChange = async (id: string, enabled: boolean) => {
     await updateTask(id, { enabled });
@@ -52,6 +67,24 @@ export function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
   const handleAddTask = async (newTaskData: Omit<Task, 'id'>) => {
     await addTask(newTaskData);
     onTaskUpdate();
+  };
+
+  const openDeleteConfirm = (task: Task) => {
+    setTaskToDelete(task);
+    setIsAlertOpen(true);
+  };
+
+  const handleDeleteTask = async () => {
+    if (!taskToDelete) return;
+    await deleteTask(taskToDelete.id);
+    toast({
+      title: 'Task Deleted',
+      description: `Task "${taskToDelete.title}" has been permanently removed.`,
+      variant: 'destructive',
+    });
+    onTaskUpdate();
+    setIsAlertOpen(false);
+    setTaskToDelete(null);
   };
 
 
@@ -77,7 +110,8 @@ export function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
                 <TableHead className="w-[250px]">Task</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead className="w-[180px]">Points</TableHead>
-                <TableHead className="text-right w-[150px]">Status</TableHead>
+                <TableHead className="text-center w-[150px]">Status</TableHead>
+                <TableHead className="text-right w-[80px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -108,8 +142,8 @@ export function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
                       />
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <div className="flex items-center justify-end space-x-3">
+                  <TableCell className="text-center">
+                    <div className="flex items-center justify-center space-x-3">
                       <Badge variant={task.enabled ? 'default' : 'secondary'} className="capitalize w-[70px] justify-center">
                         {task.enabled ? 'Enabled' : 'Disabled'}
                       </Badge>
@@ -120,6 +154,12 @@ export function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
                         aria-label={`Toggle ${task.title}`}
                       />
                     </div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                     <Button variant="ghost" size="icon" onClick={() => openDeleteConfirm(task)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                        <span className="sr-only">Delete Task</span>
+                    </Button>
                   </TableCell>
                 </TableRow>
               )})}
@@ -132,6 +172,23 @@ export function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
         onOpenChange={setIsAddTaskDialogOpen}
         onAddTask={handleAddTask}
       />
+      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the task
+              "<span className="font-bold">{taskToDelete?.title}</span>".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setTaskToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteTask} className="bg-destructive hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

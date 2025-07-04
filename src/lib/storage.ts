@@ -98,6 +98,10 @@ export const updateTask = async (id: string, data: Partial<Task>): Promise<void>
     const taskRef = doc(db, 'tasks', id);
     await updateDoc(taskRef, data);
 };
+export const deleteTask = async (id: string): Promise<void> => {
+    const taskRef = doc(db, 'tasks', id);
+    await deleteDoc(taskRef);
+};
 
 // Payment Method Functions
 export const getPaymentMethods = (options?: { filters?: [string, any, any][] }): Promise<PaymentMethod[]> => getCollectionData<PaymentMethod>('paymentMethods', options);
