@@ -43,19 +43,17 @@ export default function DashboardPage() {
       </div>
 
       {/* Available Tasks Section */}
-      <div>
-        <h2 className="text-2xl font-bold font-headline mb-4">Available Tasks</h2>
+      <section className="space-y-6">
+        <h2 className="text-2xl font-bold font-headline">Available Tasks</h2>
         {spinWheelTask && (
-          <div className="mb-6">
             <SpinWheelTask />
-          </div>
         )}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {otherTasks.map((task) => (
             <TaskCard key={task.id} {...task} />
           ))}
         </div>
-      </div>
+      </section>
       
       {/* Registration Bonus Alert */}
       <Alert className="border-accent bg-accent/10 text-accent-foreground">
