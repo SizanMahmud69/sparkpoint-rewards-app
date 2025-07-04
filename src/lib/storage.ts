@@ -4,13 +4,13 @@
 import type { User, Withdrawal, Task, PaymentMethod, PointTransaction, Notification } from './types';
 import { mockUsers, mockWithdrawals, mockTasks, mockPaymentMethods, mockPointHistory, mockNotifications } from './data';
 
-const USERS_KEY = 'sparkpoint_users_v2';
-const WITHDRAWALS_KEY = 'sparkpoint_withdrawals_v2';
+const USERS_KEY = 'sparkpoint_users_v3';
+const WITHDRAWALS_KEY = 'sparkpoint_withdrawals_v3';
 const TASKS_KEY = 'sparkpoint_tasks_v2';
 const PAYMENT_METHODS_KEY = 'sparkpoint_payment_methods_v2';
-const POINT_HISTORY_KEY = 'sparkpoint_point_history_v2';
+const POINT_HISTORY_KEY = 'sparkpoint_point_history_v3';
 const MIN_WITHDRAWAL_KEY = 'sparkpoint_min_withdrawal_v1';
-const NOTIFICATIONS_KEY = 'sparkpoint_notifications_v1';
+const NOTIFICATIONS_KEY = 'sparkpoint_notifications_v2';
 
 
 const getLocalStorage = () => {
