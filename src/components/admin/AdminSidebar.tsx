@@ -45,18 +45,16 @@ export function AdminSidebar() {
         <SidebarMenu>
           {navItems.map((item) => (
             <SidebarMenuItem key={item.label}>
-              <Link href={item.href} legacyBehavior passHref>
-                <SidebarMenuButton 
-                  isActive={pathname === item.href}
-                  tooltip={{children: item.label}}
-                  asChild
-                >
-                  <a>
-                    <item.icon />
-                    <span>{item.label}</span>
-                  </a>
-                </SidebarMenuButton>
-              </Link>
+              <SidebarMenuButton 
+                isActive={pathname === item.href}
+                tooltip={{children: item.label}}
+                asChild
+              >
+                <Link href={item.href}>
+                  <item.icon />
+                  <span>{item.label}</span>
+                </Link>
+              </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
@@ -65,14 +63,12 @@ export function AdminSidebar() {
       <SidebarSeparator />
 
       <SidebarFooter className="p-2">
-        <Link href="/" legacyBehavior passHref>
-            <SidebarMenuButton tooltip={{children: "Logout"}} asChild>
-                <a>
-                    <LogOut />
-                    <span>Logout</span>
-                </a>
-            </SidebarMenuButton>
-        </Link>
+        <SidebarMenuButton tooltip={{children: "Logout"}} asChild>
+            <Link href="/">
+                <LogOut />
+                <span>Logout</span>
+            </Link>
+        </SidebarMenuButton>
       </SidebarFooter>
     </>
   );
