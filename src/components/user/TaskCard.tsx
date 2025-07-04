@@ -28,26 +28,38 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
   const { user, updatePoints } = useUserPoints();
   const [isDisabled, setIsDisabled] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
+  const [earnedPoints, setEarnedPoints] = useState<number | null>(null);
   const taskKey = `task_cooldown_${id}`;
+  const pointsKey = `task_last_points_${id}`;
 
   const Icon = iconMap[icon] || Gift;
 
   useEffect(() => {
     const cooldownEnd = localStorage.getItem(taskKey);
+    const lastPoints = localStorage.getItem(pointsKey);
+
     if (cooldownEnd) {
       const remaining = new Date(cooldownEnd).getTime() - new Date().getTime();
       if (remaining > 0) {
         setIsDisabled(true);
         setTimeLeft(remaining);
+        if (lastPoints) {
+          setEarnedPoints(parseInt(lastPoints, 10));
+        }
       } else {
         localStorage.removeItem(taskKey);
+        localStorage.removeItem(pointsKey);
       }
     }
-  }, [taskKey]);
+  }, [taskKey, pointsKey]);
 
   useEffect(() => {
     if (timeLeft <= 0) {
-      if (isDisabled) localStorage.removeItem(taskKey);
+      if (isDisabled) {
+        localStorage.removeItem(taskKey);
+        localStorage.removeItem(pointsKey);
+        setEarnedPoints(null);
+      }
       setIsDisabled(false);
       return;
     }
@@ -55,7 +67,7 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
       setTimeLeft(prevTime => prevTime - 1000);
     }, 1000);
     return () => clearInterval(intervalId);
-  }, [timeLeft, isDisabled, taskKey]);
+  }, [timeLeft, isDisabled, taskKey, pointsKey]);
 
   const handleTaskComplete = () => {
     if (!user) return;
@@ -69,24 +81,26 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
     } else {
         possiblePoints = [parseInt(points, 10) || 10];
     }
-    const earnedPoints = possiblePoints[Math.floor(Math.random() * possiblePoints.length)] || possiblePoints[0];
+    const finalEarnedPoints = possiblePoints[Math.floor(Math.random() * possiblePoints.length)] || possiblePoints[0];
 
-    updatePoints(earnedPoints);
+    updatePoints(finalEarnedPoints);
     addPointTransaction({
         userId: user.id,
         task: title,
-        points: earnedPoints,
+        points: finalEarnedPoints,
         date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
     });
 
     toast({
       title: 'Task Complete!',
-      description: `You earned ${earnedPoints} points from ${title}.`,
+      description: `You earned ${finalEarnedPoints} points from ${title}.`,
     });
 
     const cooldownDuration = 24 * 60 * 60 * 1000; // 24 hours
     const cooldownEnd = new Date(new Date().getTime() + cooldownDuration);
     localStorage.setItem(taskKey, cooldownEnd.toISOString());
+    localStorage.setItem(pointsKey, String(finalEarnedPoints));
+    setEarnedPoints(finalEarnedPoints);
     setIsDisabled(true);
     setTimeLeft(cooldownDuration);
   };
@@ -107,14 +121,24 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
             color,
             "text-white"
         )}>
-            <Icon className="h-12 w-12 text-white/80" />
-            <div className="flex-grow">
-                <h3 className="font-headline text-lg">{title}</h3>
-                <p className="text-sm text-white/70">{description}</p>
-            </div>
-            <div className="bg-white/20 rounded-full px-4 py-1 text-sm font-bold">
-              {points} Points
-            </div>
+            {earnedPoints !== null ? (
+                <div className="flex-grow flex flex-col justify-center items-center">
+                    <p className="text-white/80 text-lg">You earned</p>
+                    <p className="font-headline text-6xl font-bold">{earnedPoints}</p>
+                    <p className="text-white/80 text-lg">Points!</p>
+                </div>
+            ) : (
+                <>
+                    <Icon className="h-12 w-12 text-white/80" />
+                    <div className="flex-grow">
+                        <h3 className="font-headline text-lg">{title}</h3>
+                        <p className="text-sm text-white/70">{description}</p>
+                    </div>
+                    <div className="bg-white/20 rounded-full px-4 py-1 text-sm font-bold">
+                      {points} Points
+                    </div>
+                </>
+            )}
              <div className="w-full pt-2">
               {isDisabled ? (
                   <Button disabled className="w-full bg-white/20 text-white/70 backdrop-blur-sm">
