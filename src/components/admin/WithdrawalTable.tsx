@@ -14,10 +14,22 @@ import type { Withdrawal } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Button } from '../ui/button';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, Search, CheckCircle, XCircle } from 'lucide-react';
+import { Input } from '../ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+
 
 export function WithdrawalTable({ withdrawals: initialWithdrawals }: { withdrawals: Withdrawal[] }) {
   const [withdrawals, setWithdrawals] = React.useState(initialWithdrawals);
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState('All');
+
 
   const handleStatusChange = (id: number, newStatus: Withdrawal['status']) => {
     // In a real app, this would be an API call.
@@ -37,55 +49,105 @@ export function WithdrawalTable({ withdrawals: initialWithdrawals }: { withdrawa
     }
   };
 
+  const filteredWithdrawals = withdrawals.filter(w => {
+    const matchesSearch = w.userName.toLowerCase().includes(searchTerm.toLowerCase()) || w.details.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'All' || w.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
   return (
      <Card>
       <CardHeader>
-        <CardTitle>Withdrawal History</CardTitle>
-        <CardDescription>Review and manage user withdrawal requests.</CardDescription>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <CardTitle>Withdrawal History</CardTitle>
+                <CardDescription>Review and manage user withdrawal requests.</CardDescription>
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="relative w-full sm:w-64">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                        placeholder="Search by user or details..." 
+                        className="pl-8"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full sm:w-[180px]">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Statuses</SelectItem>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="Completed">Completed</SelectItem>
+                    <SelectItem value="Rejected">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+            </div>
+        </div>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="hidden md:table-cell w-[120px]">Date</TableHead>
               <TableHead>User</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Method</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Method & Details</TableHead>
+              <TableHead className="text-right">Amount</TableHead>
+              <TableHead className="text-center w-[120px]">Status</TableHead>
+              <TableHead className="text-right w-[80px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {withdrawals.map((w) => (
+            {filteredWithdrawals.length > 0 ? filteredWithdrawals.map((w) => (
               <TableRow key={w.id}>
-                <TableCell className="font-medium">{w.userName}</TableCell>
-                <TableCell>{w.amountPoints.toLocaleString()} pts (${w.amountUSD.toFixed(2)})</TableCell>
-                <TableCell>{w.method}</TableCell>
-                <TableCell>{w.date}</TableCell>
+                <TableCell className="hidden md:table-cell font-mono text-sm">{w.date}</TableCell>
                 <TableCell>
-                    <Badge variant={getStatusBadgeVariant(w.status)}>{w.status}</Badge>
+                  <div className="font-medium">{w.userName}</div>
+                  <div className="text-xs text-muted-foreground">User ID: {w.userId}</div>
+                </TableCell>
+                <TableCell>
+                  <div className="font-medium">{w.method}</div>
+                  <div className="text-xs text-muted-foreground truncate max-w-[150px]">{w.details}</div>
+                </TableCell>
+                <TableCell className="text-right">
+                    <div className="font-bold">{w.amountPoints.toLocaleString()} pts</div>
+                    <div className="text-xs text-muted-foreground">${w.amountUSD.toFixed(2)}</div>
+                </TableCell>
+                <TableCell className="text-center">
+                    <Badge variant={getStatusBadgeVariant(w.status)} className="capitalize">{w.status}</Badge>
                 </TableCell>
                 <TableCell className="text-right">
                     {w.status === 'Pending' && (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
+                                    <span className="sr-only">Open menu</span>
                                     <MoreHorizontal className="h-4 w-4" />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={() => handleStatusChange(w.id, 'Completed')}>
-                                    Approve
+                                    <CheckCircle className="mr-2 h-4 w-4"/>
+                                    <span>Approve</span>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleStatusChange(w.id, 'Rejected')}>
-                                    Reject
+                                <DropdownMenuItem onClick={() => handleStatusChange(w.id, 'Rejected')} className="text-destructive focus:text-destructive">
+                                    <XCircle className="mr-2 h-4 w-4"/>
+                                    <span>Reject</span>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     )}
                 </TableCell>
               </TableRow>
-            ))}
+            )) : (
+              <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center">
+                  No results found.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </CardContent>
