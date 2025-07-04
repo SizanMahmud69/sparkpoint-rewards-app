@@ -20,7 +20,7 @@ const navItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: Home },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/withdrawals', label: 'Withdrawals', icon: CreditCard },
-  { href: '/admin/tasks', label: 'Cannot Work This Button', icon: ClipboardList },
+  { href: '/admin/tasks', label: 'Task', icon: ClipboardList },
 ];
 
 export function AdminSidebar() {
