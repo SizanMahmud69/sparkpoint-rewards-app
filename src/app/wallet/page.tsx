@@ -59,12 +59,12 @@ export default function WalletPage() {
                         <DollarSign className="h-8 w-8 text-primary"/>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-muted-foreground">Point Value</p>
-                        <p className="text-lg font-semibold">1,000 pts = $1 USD</p>
+                        <p className="text-sm font-medium text-muted-foreground">Approximate Value</p>
+                        <p className="text-2xl font-bold font-headline">$1.25</p>
                       </div>
                     </CardHeader>
                      <CardContent className="pt-0 px-5 pb-5">
-                      <p className="text-muted-foreground text-sm">Your current balance is worth approximately $1.25</p>
+                      <p className="text-muted-foreground text-xs">1,000 points = $1 USD</p>
                     </CardContent>
                   </Card>
                 </div>
