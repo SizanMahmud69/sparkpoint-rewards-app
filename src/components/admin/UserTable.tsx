@@ -25,7 +25,7 @@ import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { AddUserDialog } from './AddUserDialog';
-import { getUsers, saveUsers } from '@/lib/storage';
+import { getUsers, saveUsers, deleteUserAndData } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -80,12 +80,12 @@ export function UserTable({ users, onUsersUpdate }: UserTableProps) {
 
   const handleDeleteUser = () => {
     if (!userToDelete) return;
-    const currentUsers = getUsers();
-    const updatedUsers = currentUsers.filter(u => u.id !== userToDelete.id);
-    saveUsers(updatedUsers);
+    
+    deleteUserAndData(userToDelete.id);
+    
     toast({
         title: "User Deleted",
-        description: `User "${userToDelete.name}" has been permanently removed.`,
+        description: `User "${userToDelete.name}" and all associated data have been permanently removed.`,
         variant: "destructive"
     });
     onUsersUpdate();

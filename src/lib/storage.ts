@@ -97,8 +97,8 @@ export const saveMinWithdrawal = (amount: number) => {
 };
 
 // Notification Storage Functions
-const getAllNotifications = (): Notification[] => getFromStorage<Notification>(NOTIFICATIONS_KEY, mockNotifications);
-const saveAllNotifications = (notifications: Notification[]) => saveToStorage<Notification>(NOTIFICATIONS_KEY, notifications);
+export const getAllNotifications = (): Notification[] => getFromStorage<Notification>(NOTIFICATIONS_KEY, mockNotifications);
+export const saveAllNotifications = (notifications: Notification[]) => saveToStorage<Notification>(NOTIFICATIONS_KEY, notifications);
 
 export const getNotificationsForUser = (userId: number): Notification[] => {
     return getAllNotifications().filter(n => n.userId === userId).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -118,5 +118,27 @@ export const markNotificationsAsRead = (userId: number) => {
     const updatedNotifications = allNotifications.map(n => 
         n.userId === userId ? { ...n, read: true } : n
     );
+    saveAllNotifications(updatedNotifications);
+};
+
+export const deleteUserAndData = (userId: number) => {
+    // Delete user
+    const users = getUsers();
+    const updatedUsers = users.filter(u => u.id !== userId);
+    saveUsers(updatedUsers);
+
+    // Delete withdrawal history
+    const withdrawals = getWithdrawals();
+    const updatedWithdrawals = withdrawals.filter(w => w.userId !== userId);
+    saveWithdrawals(updatedWithdrawals);
+
+    // Delete point history
+    const pointHistory = getAllPointHistory();
+    const updatedPointHistory = pointHistory.filter(p => p.userId !== userId);
+    saveToStorage<PointTransaction>(POINT_HISTORY_KEY, updatedPointHistory);
+
+    // Delete notifications
+    const notifications = getAllNotifications();
+    const updatedNotifications = notifications.filter(n => n.userId !== userId);
     saveAllNotifications(updatedNotifications);
 };
