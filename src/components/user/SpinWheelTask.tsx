@@ -35,7 +35,7 @@ export function SpinWheelTask({ task }: { task: Task }) {
 
     useEffect(() => {
         if (!user || !task.id) return;
-        if (limitPerDay === 0) {
+        if (limitPerDay === 0 || user.status === 'Frozen') {
             setIsDisabled(true);
             return;
         }
@@ -69,7 +69,7 @@ export function SpinWheelTask({ task }: { task: Task }) {
 
      useEffect(() => {
         if (!isDisabled || timeLeft <= 0) {
-            if (isDisabled && timeLeft <= 0 && limitPerDay !== 0) {
+            if (isDisabled && timeLeft <= 0 && limitPerDay !== 0 && user?.status !== 'Frozen') {
                  setIsDisabled(false);
             }
             return;
@@ -83,11 +83,20 @@ export function SpinWheelTask({ task }: { task: Task }) {
         }, 1000);
         
         return () => clearInterval(intervalId);
-    }, [timeLeft, isDisabled, limitPerDay]);
+    }, [timeLeft, isDisabled, limitPerDay, user]);
 
 
     const handleSpin = () => {
         if (isSpinning || isDisabled || !user ) return;
+
+        if (user.status === 'Frozen') {
+            toast({
+                variant: "destructive",
+                title: "Account Frozen",
+                description: "You cannot complete tasks while your account is frozen.",
+            });
+            return;
+        }
         
         setIsSpinning(true);
         const randomSpins = Math.floor(Math.random() * 5) + 5;
@@ -195,7 +204,7 @@ export function SpinWheelTask({ task }: { task: Task }) {
                 </div>
                 
                 <div className="w-full pt-1">
-                    <Button onClick={handleSpin} disabled={isSpinning || isDisabled} className="w-full bg-white text-primary font-bold hover:bg-white/90">
+                    <Button onClick={handleSpin} disabled={isSpinning || isDisabled || user?.status === 'Frozen'} className="w-full bg-white text-primary font-bold hover:bg-white/90">
                         {isDisabled ? (
                             timeLeft > 0 ? (
                                 <span className="flex items-center">

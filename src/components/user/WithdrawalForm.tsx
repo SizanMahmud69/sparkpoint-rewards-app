@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import type { PaymentMethod } from '@/lib/types';
+import type { PaymentMethod, User } from '@/lib/types';
 import { History, Loader2 } from 'lucide-react';
 
 const createWithdrawalSchema = (minPoints: number, maxPoints: number) => z.object({
@@ -31,6 +31,7 @@ interface WithdrawalFormProps {
     onHistoryClick: () => void;
     onSubmitRequest: (values: WithdrawalFormValues) => void;
     currentBalance: number;
+    userStatus?: User['status'];
 }
 
 export function WithdrawalForm({ 
@@ -38,7 +39,8 @@ export function WithdrawalForm({
   minWithdrawalPoints = 1000, 
   onHistoryClick,
   onSubmitRequest,
-  currentBalance
+  currentBalance,
+  userStatus
 }: WithdrawalFormProps) {
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | undefined>();
   const [isLoading, setIsLoading] = useState(false);
@@ -148,9 +150,9 @@ export function WithdrawalForm({
               />
             }
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full" disabled={isLoading || userStatus === 'Frozen'}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Submit Withdrawal Request
+              {userStatus === 'Frozen' ? 'Account Frozen' : 'Submit Withdrawal Request'}
             </Button>
           </form>
         </Form>

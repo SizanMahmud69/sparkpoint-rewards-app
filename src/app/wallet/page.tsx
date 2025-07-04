@@ -74,6 +74,11 @@ export default function WalletPage() {
       return;
     }
 
+    if (user.status === 'Frozen') {
+        toast({ variant: "destructive", title: "Account Frozen", description: "You cannot make withdrawals while your account is frozen." });
+        return;
+    }
+
     if (data.points > points) {
       toast({
         variant: "destructive",
@@ -165,6 +170,7 @@ export default function WalletPage() {
                 onHistoryClick={() => setIsWithdrawalHistoryDialogOpen(true)}
                 onSubmitRequest={handleWithdrawalRequest}
                 currentBalance={points}
+                userStatus={user?.status}
               />
             ) : (
                <Card className="shadow-lg flex flex-col h-full">

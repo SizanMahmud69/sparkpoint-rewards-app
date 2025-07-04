@@ -19,7 +19,7 @@ import {
   DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle, Search, RotateCw, FileText, Ban, UserCheck, Trash2 } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Search, RotateCw, FileText, Ban, UserCheck, Trash2, Snowflake } from 'lucide-react';
 import type { User } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
@@ -39,14 +39,23 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from '../ui/skeleton';
+import { cn } from '@/lib/utils';
 
-const getStatusBadgeVariant = (status: User['status']): "default" | "destructive" => {
-  switch (status) {
-    case 'Active':
-      return 'default';
-    case 'Suspended':
-      return 'destructive';
-  }
+const getStatusBadgeClass = (status: User['status']) => {
+    switch (status) {
+      case 'Active':
+        return "border-transparent bg-green-500/20 text-green-700 dark:text-green-400";
+      case 'Suspended':
+        return "border-transparent bg-red-500/20 text-red-600 dark:text-red-400";
+      case 'Frozen':
+        return "border-transparent bg-blue-500/20 text-blue-700 dark:text-blue-400";
+      default:
+        return "";
+    }
+};
+
+const getStatusBadgeVariant = (status: User['status']): "outline" => {
+    return 'outline';
 };
 
 interface UserTableProps {
@@ -187,7 +196,7 @@ export function UserTable({ users, onUsersUpdate, loading }: UserTableProps) {
                   </TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
-                    <Badge variant={getStatusBadgeVariant(user.status)}>{user.status}</Badge>
+                    <Badge variant={getStatusBadgeVariant(user.status)} className={getStatusBadgeClass(user.status)}>{user.status}</Badge>
                   </TableCell>
                   <TableCell className="text-right">{user.points.toLocaleString()}</TableCell>
                   <TableCell>{new Date(user.registrationDate).toLocaleDateString()}</TableCell>
@@ -212,10 +221,16 @@ export function UserTable({ users, onUsersUpdate, loading }: UserTableProps) {
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                          {user.status === 'Active' ? (
-                          <DropdownMenuItem onClick={() => handleStatusChange(user.id, user.name, 'Suspended')}>
-                            <Ban className="mr-2 h-4 w-4" />
-                            <span>Suspend User</span>
-                          </DropdownMenuItem>
+                          <>
+                            <DropdownMenuItem onClick={() => handleStatusChange(user.id, user.name, 'Frozen')}>
+                                <Snowflake className="mr-2 h-4 w-4" />
+                                <span>Freeze Account</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleStatusChange(user.id, user.name, 'Suspended')}>
+                                <Ban className="mr-2 h-4 w-4" />
+                                <span>Suspend User</span>
+                            </DropdownMenuItem>
+                          </>
                         ) : (
                           <DropdownMenuItem onClick={() => handleStatusChange(user.id, user.name, 'Active')}>
                             <UserCheck className="mr-2 h-4 w-4" />

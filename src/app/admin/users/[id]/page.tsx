@@ -13,14 +13,23 @@ import { WithdrawalTable } from '@/components/admin/WithdrawalTable';
 import { getUserById, getPointHistoryForUser, getWithdrawalsForUser } from '@/lib/storage';
 import type { User, PointTransaction, Withdrawal } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
-const getStatusBadgeVariant = (status: User['status']): "default" | "destructive" => {
-  switch (status) {
-    case 'Active':
-      return 'default';
-    case 'Suspended':
-      return 'destructive';
-  }
+const getStatusBadgeClass = (status: User['status']) => {
+    switch (status) {
+      case 'Active':
+        return 'border-transparent bg-green-500/20 text-green-700 dark:text-green-400';
+      case 'Suspended':
+        return 'border-transparent bg-red-500/20 text-red-600 dark:text-red-400';
+      case 'Frozen':
+        return 'border-transparent bg-blue-500/20 text-blue-700 dark:text-blue-400';
+      default:
+        return '';
+    }
+};
+
+const getStatusBadgeVariant = (status: User['status']): "outline" => {
+    return 'outline';
 };
 
 
@@ -100,7 +109,7 @@ export default function UserDetailsPage() {
                             </Avatar>
                             <CardTitle className="text-2xl font-headline">{user.name}</CardTitle>
                             <CardDescription>ID: {user.id}</CardDescription>
-                            <Badge variant={getStatusBadgeVariant(user.status)} className="mt-2">{user.status}</Badge>
+                            <Badge variant={getStatusBadgeVariant(user.status)} className={cn("mt-2", getStatusBadgeClass(user.status))}>{user.status}</Badge>
                         </CardHeader>
                     </Card>
 

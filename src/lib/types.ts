@@ -7,7 +7,7 @@ export type User = {
   password?: string;
   points: number;
   registrationDate: string;
-  status: 'Active' | 'Suspended';
+  status: 'Active' | 'Suspended' | 'Frozen';
   avatar?: string;
 };
 

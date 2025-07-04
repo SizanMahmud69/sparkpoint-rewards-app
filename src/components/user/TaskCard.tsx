@@ -35,7 +35,7 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
 
   useEffect(() => {
     if (!user || !id) return;
-    if (limitPerDay === 0) {
+    if (limitPerDay === 0 || user.status === 'Frozen') {
       setIsDisabled(true);
       return;
     }
@@ -73,7 +73,7 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
 
   useEffect(() => {
     if (!isDisabled || timeLeft <= 0) {
-      if (isDisabled && timeLeft <= 0 && limitPerDay !== 0) {
+      if (isDisabled && timeLeft <= 0 && limitPerDay !== 0 && user?.status !== 'Frozen') {
         setEarnedPoints(null);
         setIsDisabled(false);
       }
@@ -90,10 +90,19 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
     }, 1000);
 
     return () => clearInterval(intervalId);
-  }, [timeLeft, isDisabled, limitPerDay]);
+  }, [timeLeft, isDisabled, limitPerDay, user]);
 
   const handleTaskComplete = async () => {
     if (!user || !id || isDisabled || isCompleting) return;
+
+    if (user.status === 'Frozen') {
+        toast({
+            variant: "destructive",
+            title: "Account Frozen",
+            description: "You cannot complete tasks while your account is frozen.",
+        });
+        return;
+    }
     
     setIsCompleting(true);
     
@@ -170,25 +179,21 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
                 </>
             )}
              <div className="w-full pt-2">
-              {isDisabled || isCompleting ? (
-                  <Button disabled className="w-full bg-white/20 text-white/70 backdrop-blur-sm">
-                      {isCompleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                      {isCompleting ? 'Processing...' : (
-                        timeLeft > 0 ? (
-                            <>
-                                <Timer className="mr-2 h-4 w-4" />
-                                {formatTime(timeLeft)}
-                            </>
-                        ) : (
-                            'Unavailable'
-                        )
-                      )}
-                  </Button>
-                  ) : (
-                  <Button onClick={handleTaskComplete} className="w-full bg-white text-primary font-bold hover:bg-white/90">
-                      {actionText}
-                  </Button>
-              )}
+              <Button onClick={handleTaskComplete} disabled={isDisabled || isCompleting || user?.status === 'Frozen'} className="w-full bg-white text-primary font-bold hover:bg-white/90">
+                  {isCompleting ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : null}
+                  {isDisabled ? (
+                      timeLeft > 0 ? (
+                          <>
+                              <Timer className="mr-2 h-4 w-4" />
+                              {formatTime(timeLeft)}
+                          </>
+                      ) : (
+                          'Unavailable'
+                      )
+                  ) : isCompleting ? 'Processing...' : actionText}
+              </Button>
              </div>
         </div>
     </Card>

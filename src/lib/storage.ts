@@ -74,7 +74,7 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
     return users.length > 0 ? users[0] : null;
 };
 export const addUser = (data: Omit<User, 'id'>): Promise<(User & {id: string}) | null> => addDocument<Omit<User, 'id'>>('users', data);
-export const updateUserStatus = async (id: string, status: 'Active' | 'Suspended'): Promise<void> => {
+export const updateUserStatus = async (id: string, status: 'Active' | 'Suspended' | 'Frozen'): Promise<void> => {
     const userRef = doc(db, 'users', id);
     await updateDoc(userRef, { status });
 };
