@@ -17,7 +17,6 @@ export const mockWithdrawals: Withdrawal[] = [
 ];
 
 export const mockPointHistory: PointTransaction[] = [
-    { id: 1, task: 'Registration Bonus', points: 50, date: '2023-11-10' },
     { id: 2, task: 'Daily Login Reward', points: 20, date: '2023-11-10' },
     { id: 3, task: 'Spin The Wheel', points: 15, date: '2023-11-09' },
     { id: 4, task: 'Scratch & Win', points: 30, date: '2023-11-09' },

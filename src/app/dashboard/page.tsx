@@ -1,8 +1,7 @@
 import { TaskCard } from '@/components/user/TaskCard';
-import { Gift, Coins, Trophy } from 'lucide-react';
+import { Coins, Trophy } from 'lucide-react';
 import { mockTasks } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { SpinWheelTask } from '@/components/user/SpinWheelTask';
 
 export default function DashboardPage() {
@@ -54,15 +53,6 @@ export default function DashboardPage() {
           ))}
         </div>
       </section>
-      
-      {/* Registration Bonus Alert */}
-      <Alert className="border-accent bg-accent/10 text-accent-foreground">
-        <Gift className="h-4 w-4 stroke-current" />
-        <AlertTitle className="font-headline text-accent">Registration Bonus!</AlertTitle>
-        <AlertDescription>
-          You received <span className="font-bold">50 points</span> for signing up. Welcome aboard!
-        </AlertDescription>
-      </Alert>
 
     </div>
   );
