@@ -1,4 +1,3 @@
-
 'use client';
 
 import { db } from './firebase';
@@ -114,7 +113,10 @@ export const deletePaymentMethod = async (id: string): Promise<void> => {
 
 // Point History Functions
 export const getAllPointHistory = (): Promise<PointTransaction[]> => getCollectionData<PointTransaction>('pointHistory', { orderBy: ['date', 'desc'] });
-export const getPointHistoryForUser = (userId: string): Promise<PointTransaction[]> => getCollectionData<PointTransaction>('pointHistory', { filters: [['userId', '==', userId]], orderBy: ['date', 'desc'] });
+export const getPointHistoryForUser = async (userId: string): Promise<PointTransaction[]> => {
+    const history = await getCollectionData<PointTransaction>('pointHistory', { filters: [['userId', '==', userId]] });
+    return history.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+};
 export const addPointTransaction = (data: Omit<PointTransaction, 'id'>): Promise<(PointTransaction & {id: string}) | null> => addDocument<Omit<PointTransaction, 'id'>>('pointHistory', data);
 
 
@@ -133,11 +135,11 @@ export const saveMinWithdrawal = async (amount: number) => {
 };
 
 // Notification Functions
-export const getNotificationsForUser = (userId: string): Promise<Notification[]> => {
-    return getCollectionData<Notification>('notifications', { 
-        filters: [['userId', '==', userId]], 
-        orderBy: ['date', 'desc'] 
+export const getNotificationsForUser = async (userId: string): Promise<Notification[]> => {
+    const notifications = await getCollectionData<Notification>('notifications', {
+        filters: [['userId', '==', userId]],
     });
+    return notifications.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 };
 export const addNotification = (data: Omit<Notification, 'id'>) => addDocument<Omit<Notification, 'id'>>('notifications', data);
 export const markNotificationsAsRead = async (userId: string) => {
