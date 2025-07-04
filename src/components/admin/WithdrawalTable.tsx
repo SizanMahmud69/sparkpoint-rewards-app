@@ -10,8 +10,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import type { Withdrawal } from '@/lib/types';
-import { mockUsers } from '@/lib/data';
+import type { Withdrawal, User } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Button } from '../ui/button';
@@ -28,23 +27,21 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
 
 export function WithdrawalTable({
-  withdrawals: initialWithdrawals,
+  withdrawals,
+  users,
   isUserView = false,
+  onStatusChange,
 }: {
   withdrawals: Withdrawal[];
+  users: User[];
   isUserView?: boolean;
+  onStatusChange?: (id: number, newStatus: Withdrawal['status']) => void;
 }) {
-  const [withdrawals, setWithdrawals] = React.useState(initialWithdrawals);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('All');
 
-  const userMap = React.useMemo(() => new Map(mockUsers.map(user => [user.id, user])), []);
+  const userMap = React.useMemo(() => new Map(users.map(user => [user.id, user])), [users]);
 
-
-  const handleStatusChange = (id: number, newStatus: Withdrawal['status']) => {
-    // In a real app, this would be an API call.
-    setWithdrawals(withdrawals.map(w => w.id === id ? { ...w, status: newStatus } : w));
-  };
   
   const getStatusBadgeVariant = (status: Withdrawal['status']): "default" | "secondary" | "destructive" | "outline" => {
     switch (status) {
@@ -61,7 +58,8 @@ export function WithdrawalTable({
 
   const filteredWithdrawals = !isUserView
     ? withdrawals.filter(w => {
-      const matchesSearch = w.userName.toLowerCase().includes(searchTerm.toLowerCase()) || w.details.toLowerCase().includes(searchTerm.toLowerCase());
+      const user = userMap.get(w.userId);
+      const matchesSearch = (user?.name.toLowerCase().includes(searchTerm.toLowerCase()) || w.details.toLowerCase().includes(searchTerm.toLowerCase()));
       const matchesStatus = statusFilter === 'All' || w.status === statusFilter;
       return matchesSearch && matchesStatus;
     })
@@ -119,18 +117,18 @@ export function WithdrawalTable({
               return (
               <TableRow key={w.id}>
                 <TableCell className="hidden md:table-cell">
-                  <div className="font-mono text-sm">{w.date.split(' ')[0]}</div>
-                  <div className="text-xs text-muted-foreground font-mono">{w.date.split(' ').slice(1).join(' ')}</div>
+                  <div className="font-mono text-sm">{w.date.split(',')[0]}</div>
+                  <div className="text-xs text-muted-foreground font-mono">{w.date.split(',').slice(1).join(' ')}</div>
                 </TableCell>
                 {!isUserView && (
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9 hidden sm:flex">
                           <AvatarImage src={user?.avatar} alt={user?.name} data-ai-hint="person face" />
-                          <AvatarFallback>{w.userName.charAt(0)}</AvatarFallback>
+                          <AvatarFallback>{user?.name.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div>
-                          <div className="font-medium">{w.userName}</div>
+                          <div className="font-medium">{user?.name}</div>
                           <div className="text-xs text-muted-foreground">ID: {w.userId}</div>
                       </div>
                     </div>
@@ -149,7 +147,7 @@ export function WithdrawalTable({
                 </TableCell>
                 {!isUserView && (
                     <TableCell className="text-right">
-                        {w.status === 'Pending' && (
+                        {w.status === 'Pending' && onStatusChange && (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
@@ -158,11 +156,11 @@ export function WithdrawalTable({
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => handleStatusChange(w.id, 'Completed')}>
+                                    <DropdownMenuItem onClick={() => onStatusChange(w.id, 'Completed')}>
                                         <CheckCircle className="mr-2 h-4 w-4"/>
                                         <span>Approve</span>
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleStatusChange(w.id, 'Rejected')} className="text-destructive focus:text-destructive">
+                                    <DropdownMenuItem onClick={() => onStatusChange(w.id, 'Rejected')} className="text-destructive focus:text-destructive">
                                         <XCircle className="mr-2 h-4 w-4"/>
                                         <span>Reject</span>
                                     </DropdownMenuItem>

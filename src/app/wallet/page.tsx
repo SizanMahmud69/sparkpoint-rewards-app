@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { UserHeader } from "@/components/user/UserHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { PointsHistoryTable } from "@/components/user/PointsHistoryTable";
-import { WithdrawalForm } from "@/components/user/WithdrawalForm";
-import { mockPointHistory, mockWithdrawals } from "@/lib/data";
+import { WithdrawalForm, type WithdrawalFormValues } from "@/components/user/WithdrawalForm";
+import { mockPointHistory, mockWithdrawals, mockUsers } from "@/lib/data";
 import { Coins, DollarSign, History } from 'lucide-react';
 import { WithdrawalTable } from "@/components/admin/WithdrawalTable";
 import { Button } from '@/components/ui/button';
@@ -16,12 +16,56 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import type { PointTransaction, Withdrawal } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
 
 export default function WalletPage() {
+  const { toast } = useToast();
+  const loggedInUserId = 1;
+  const initialUser = mockUsers.find(u => u.id === loggedInUserId)!;
+
+  const [balance, setBalance] = useState(initialUser.points);
+  const [pointHistory, setPointHistory] = useState<PointTransaction[]>(mockPointHistory);
+  const [withdrawalHistory, setWithdrawalHistory] = useState<Withdrawal[]>(
+    mockWithdrawals.filter(w => w.userId === loggedInUserId)
+  );
+
   const [isPointsHistoryDialogOpen, setIsPointsHistoryDialogOpen] = useState(false);
   const [isWithdrawalHistoryDialogOpen, setIsWithdrawalHistoryDialogOpen] = useState(false);
-  const userWithdrawals = mockWithdrawals.filter(w => w.userId === 1 || w.userId === 2 || w.userId === 3);
-  const minWithdrawalPoints = 1000; // This would be fetched from settings in a real app
+  
+  const minWithdrawalPoints = 1000;
+
+  const handleWithdrawalRequest = (data: WithdrawalFormValues) => {
+    if (data.points > balance) {
+      toast({
+        variant: "destructive",
+        title: "Insufficient Balance",
+        description: "You do not have enough points to make this withdrawal.",
+      });
+      return;
+    }
+
+    setBalance(prevBalance => prevBalance - data.points);
+
+    const newWithdrawal: Withdrawal = {
+      id: Math.random(),
+      userId: loggedInUserId,
+      userName: initialUser.name,
+      amountPoints: data.points,
+      amountUSD: data.points / 1000,
+      method: data.method as any,
+      details: data.details,
+      date: new Date().toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }),
+      status: 'Pending',
+    };
+    setWithdrawalHistory(prev => [newWithdrawal, ...prev]);
+
+    toast({
+      title: 'Withdrawal Request Submitted',
+      description: `Your request for ${data.points.toLocaleString()} points is being processed.`,
+    });
+  };
+
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -41,7 +85,7 @@ export default function WalletPage() {
                        </div>
                        <div>
                           <p className="text-sm font-medium text-muted-foreground">Current Balance</p>
-                          <p className="text-2xl font-bold font-headline">1,250 Points</p>
+                          <p className="text-2xl font-bold font-headline">{balance.toLocaleString()} Points</p>
                        </div>
                     </CardHeader>
                     <CardContent className="flex-grow p-0" />
@@ -59,7 +103,7 @@ export default function WalletPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Approximate Value</p>
-                        <p className="text-2xl font-bold font-headline">$1.25</p>
+                        <p className="text-2xl font-bold font-headline">${(balance / 1000).toFixed(2)}</p>
                       </div>
                     </CardHeader>
                      <CardContent className="pt-0 px-5 pb-5">
@@ -72,6 +116,8 @@ export default function WalletPage() {
                   <WithdrawalForm 
                     minWithdrawalPoints={minWithdrawalPoints}
                     onHistoryClick={() => setIsWithdrawalHistoryDialogOpen(true)}
+                    onSubmitRequest={handleWithdrawalRequest}
+                    currentBalance={balance}
                   />
                 </div>
               </div>
@@ -88,7 +134,7 @@ export default function WalletPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="max-h-[60vh] overflow-y-auto pr-4">
-            <PointsHistoryTable transactions={mockPointHistory} />
+            <PointsHistoryTable transactions={pointHistory} />
           </div>
         </DialogContent>
       </Dialog>
@@ -102,7 +148,7 @@ export default function WalletPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="max-h-[60vh] overflow-y-auto pr-4">
-            <WithdrawalTable withdrawals={userWithdrawals} isUserView={true} />
+            <WithdrawalTable withdrawals={withdrawalHistory} users={mockUsers} isUserView={true} />
           </div>
         </DialogContent>
       </Dialog>

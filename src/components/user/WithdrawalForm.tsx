@@ -9,42 +9,63 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
 import { mockPaymentMethods } from '@/lib/data';
 import type { PaymentMethod } from '@/lib/types';
-import { History } from 'lucide-react';
+import { History, Loader2 } from 'lucide-react';
 
-const createWithdrawalSchema = (minPoints: number) => z.object({
-  points: z.coerce.number().min(minPoints, { message: `Minimum withdrawal is ${minPoints} points.` }),
+const createWithdrawalSchema = (minPoints: number, maxPoints: number) => z.object({
+  points: z.coerce
+    .number()
+    .min(minPoints, { message: `Minimum withdrawal is ${minPoints} points.` })
+    .max(maxPoints, { message: `You cannot withdraw more than your balance.` }),
   method: z.string({ required_error: 'Please select a payment method.' }),
   details: z.string().min(1, { message: 'Withdrawal details are required.' }),
 });
 
-export function WithdrawalForm({ minWithdrawalPoints = 1000, onHistoryClick }: { minWithdrawalPoints?: number, onHistoryClick: () => void }) {
+export type WithdrawalFormValues = z.infer<ReturnType<typeof createWithdrawalSchema>>;
+
+interface WithdrawalFormProps {
+    minWithdrawalPoints?: number;
+    onHistoryClick: () => void;
+    onSubmitRequest: (values: WithdrawalFormValues) => void;
+    currentBalance: number;
+}
+
+export function WithdrawalForm({ 
+  minWithdrawalPoints = 1000, 
+  onHistoryClick,
+  onSubmitRequest,
+  currentBalance
+}: WithdrawalFormProps) {
   const paymentMethods = mockPaymentMethods.filter(m => m.enabled);
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(paymentMethods[0] || {} as PaymentMethod);
-  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const withdrawalSchema = createWithdrawalSchema(minWithdrawalPoints);
-  type WithdrawalFormValues = z.infer<typeof withdrawalSchema>;
-
+  const withdrawalSchema = createWithdrawalSchema(minWithdrawalPoints, currentBalance);
+  
   const form = useForm<WithdrawalFormValues>({
     resolver: zodResolver(withdrawalSchema),
+    defaultValues: {
+      points: minWithdrawalPoints,
+      method: paymentMethods[0]?.value,
+      details: '',
+    }
   });
 
   const handleMethodChange = (value: string) => {
     const method = paymentMethods.find(m => m.value === value) || paymentMethods[0];
     setSelectedMethod(method);
     form.setValue('method', value);
+    form.clearErrors('method');
   };
 
   const onSubmit = (data: WithdrawalFormValues) => {
-    console.log(data);
-    toast({
-      title: 'Withdrawal Request Submitted',
-      description: `Your request for ${data.points} points is being processed.`,
-    });
-    form.reset();
+    setIsLoading(true);
+    setTimeout(() => {
+        onSubmitRequest(data);
+        form.reset({ points: minWithdrawalPoints, method: selectedMethod.value, details: '' });
+        setIsLoading(false);
+    }, 1000);
   };
 
   return (
@@ -77,7 +98,7 @@ export function WithdrawalForm({ minWithdrawalPoints = 1000, onHistoryClick }: {
           
           <div className="space-y-2">
             <Label htmlFor="method">Payment Method</Label>
-            <Select onValueChange={handleMethodChange} defaultValue={selectedMethod.value}>
+            <Select onValueChange={handleMethodChange} defaultValue={selectedMethod.value} name={form.name}>
               <SelectTrigger id="method">
                 <SelectValue placeholder="Select a method" />
               </SelectTrigger>
@@ -94,7 +115,8 @@ export function WithdrawalForm({ minWithdrawalPoints = 1000, onHistoryClick }: {
             {form.formState.errors.details && <p className="text-sm text-destructive">{form.formState.errors.details.message}</p>}
           </div>
 
-          <Button type="submit" className="w-full">
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Submit Withdrawal Request
           </Button>
         </form>
