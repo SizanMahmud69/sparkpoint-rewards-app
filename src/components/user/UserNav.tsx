@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Bell, User, Wallet, LogOut, CheckCircle, XCircle, Info } from 'lucide-react';
+import { Bell, User, Wallet, LogOut, CheckCircle, XCircle, Info, LayoutDashboard } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { useUserPoints } from '@/context/UserPointsContext';
 import { getNotificationsForUser, markNotificationsAsRead } from '@/lib/storage';
@@ -128,6 +128,9 @@ export function UserNav() {
             </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+                <Link href="/dashboard"><LayoutDashboard className="mr-2 h-4 w-4" />Dashboard</Link>
+            </DropdownMenuItem>
             <DropdownMenuItem asChild>
                 <Link href="/profile"><User className="mr-2 h-4 w-4" />Profile</Link>
             </DropdownMenuItem>
