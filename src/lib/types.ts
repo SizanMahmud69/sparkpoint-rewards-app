@@ -12,7 +12,7 @@ export type User = {
 };
 
 export type Withdrawal = {
-  id: string;
+  id:string;
   userId: string;
   userName: string;
   amountPoints: number;
@@ -40,7 +40,7 @@ export type Task = {
   color: string;
   actionText: string;
   enabled: boolean;
-  limitPerDay: number;
+  limitPerDay?: number;
 };
 
 export type PaymentMethod = {

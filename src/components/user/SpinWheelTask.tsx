@@ -32,6 +32,7 @@ export function SpinWheelTask({ task }: { task: Task }) {
     const [isDisabled, setIsDisabled] = useState(false);
     const [timeLeft, setTimeLeft] = useState(0);
     const [completions, setCompletions] = useState(0);
+    const limitPerDay = task.limitPerDay ?? 1;
 
     const taskUsageKey = user ? `task_usage_${user.id}_${task.id}` : null;
 
@@ -53,7 +54,7 @@ export function SpinWheelTask({ task }: { task: Task }) {
                     setTimeLeft(0);
                 } else {
                     setCompletions(usageData.count);
-                    if (usageData.count >= task.limitPerDay) {
+                    if (usageData.count >= limitPerDay) {
                         setIsDisabled(true);
                         setTimeLeft(twentyFourHours - (now - firstCompletionTime));
                     } else {
@@ -68,7 +69,7 @@ export function SpinWheelTask({ task }: { task: Task }) {
             setIsDisabled(false);
             setCompletions(0);
         }
-    }, [taskUsageKey, task.limitPerDay]);
+    }, [taskUsageKey, limitPerDay]);
 
      useEffect(() => {
         if (!isDisabled || timeLeft <= 0) {
@@ -138,7 +139,7 @@ export function SpinWheelTask({ task }: { task: Task }) {
             localStorage.setItem(taskUsageKey, JSON.stringify(newUsageData));
             setCompletions(newCount);
 
-            if (newCount >= task.limitPerDay) {
+            if (newCount >= limitPerDay) {
                 setIsDisabled(true);
                 const twentyFourHours = 24 * 60 * 60 * 1000;
                 setTimeLeft(twentyFourHours);

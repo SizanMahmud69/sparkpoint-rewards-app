@@ -141,8 +141,13 @@ export function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
                   <TableCell>
                     <Input 
                       type="number" 
-                      defaultValue={task.limitPerDay}
-                      onBlur={(e) => handleTaskUpdate(task.id, { limitPerDay: Number(e.target.value) })}
+                      defaultValue={task.limitPerDay ?? 1}
+                      onBlur={(e) => {
+                          const value = Number(e.target.value);
+                          if (value > 0) {
+                             handleTaskUpdate(task.id, { limitPerDay: value })
+                          }
+                      }}
                       className="max-w-[100px]"
                       aria-label={`Daily limit for ${task.title}`}
                       min="1"

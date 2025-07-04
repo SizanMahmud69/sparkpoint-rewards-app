@@ -23,7 +23,7 @@ const iconMap: { [key: string]: React.ComponentType<LucideProps> } = {
 
 type TaskCardProps = Task;
 
-export function TaskCard({ id, title, description, points, icon, color, actionText, limitPerDay }: TaskCardProps) {
+export function TaskCard({ id, title, description, points, icon, color, actionText, limitPerDay = 1 }: TaskCardProps) {
   const { toast } = useToast();
   const { user, updatePoints: contextUpdatePoints } = useUserPoints();
   const [isDisabled, setIsDisabled] = useState(false);
