@@ -51,7 +51,7 @@ export const mockTasks: Task[] = [
     description: 'Click the heart to release points.',
     points: '5/10/15',
     icon: 'HeartCrack',
-    color: 'bg-red-500',
+    color: 'bg-pink-500',
     actionText: 'Crack It',
     enabled: true,
   },
