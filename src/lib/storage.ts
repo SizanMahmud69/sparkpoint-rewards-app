@@ -53,13 +53,15 @@ export const saveTasks = (tasks: Task[]) => saveToStorage<Task>(TASKS_KEY, tasks
 export const getPaymentMethods = (): PaymentMethod[] => getFromStorage<PaymentMethod>(PAYMENT_METHODS_KEY, mockPaymentMethods);
 export const savePaymentMethods = (methods: PaymentMethod[]) => saveToStorage<PaymentMethod>(PAYMENT_METHODS_KEY, methods);
 
+export const getAllPointHistory = (): PointTransaction[] => getFromStorage<PointTransaction>(POINT_HISTORY_KEY, mockPointHistory);
+
 export const getPointHistoryForUser = (userId: number): PointTransaction[] => {
-    const allHistory = getFromStorage<PointTransaction>(POINT_HISTORY_KEY, mockPointHistory);
+    const allHistory = getAllPointHistory();
     return allHistory.filter(t => t.userId === userId);
 }
 
 export const addPointTransaction = (transaction: Omit<PointTransaction, 'id'>) => {
-    const allHistory = getFromStorage<PointTransaction>(POINT_HISTORY_KEY, mockPointHistory);
+    const allHistory = getAllPointHistory();
     const newTransaction: PointTransaction = {
         ...transaction,
         id: allHistory.length > 0 ? Math.max(...allHistory.map(t => t.id)) + 1 : 1,
