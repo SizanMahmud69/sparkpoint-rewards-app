@@ -23,7 +23,7 @@ import {
     Timestamp,
     collectionGroup
 } from 'firebase/firestore';
-import type { User, Withdrawal, Task, PaymentMethod, PointTransaction, Notification } from './types';
+import type { User, Withdrawal, Task, PaymentMethod, PointTransaction, Notification, UserTaskCompletion } from './types';
 
 
 // Generic function to fetch documents from a collection
@@ -161,6 +161,62 @@ export const markNotificationsAsRead = async (userId: string) => {
     await batch.commit();
 };
 
+// Task Completion Functions
+export const getUserTaskCompletion = async (userId: string, taskId: string): Promise<UserTaskCompletion | null> => {
+    const q = query(collection(db, "userTaskCompletions"), where("userId", "==", userId), where("taskId", "==", taskId), firestoreLimit(1));
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.empty) {
+        return null;
+    }
+    const doc = querySnapshot.docs[0];
+    return { id: doc.id, ...doc.data() } as UserTaskCompletion;
+};
+
+export const recordTaskCompletion = async (userId: string, taskId: string, earnedPoints: number): Promise<void> => {
+    const existingCompletion = await getUserTaskCompletion(userId, taskId);
+    const now = new Date();
+
+    if (existingCompletion) {
+        const firstCompletionTime = new Date(existingCompletion.firstCompletionTimestamp).getTime();
+        // Check if 24 hours have passed
+        if (now.getTime() - firstCompletionTime > 24 * 60 * 60 * 1000) {
+            // Reset the record
+            const completionRef = doc(db, 'userTaskCompletions', existingCompletion.id);
+            await updateDoc(completionRef, {
+                count: 1,
+                firstCompletionTimestamp: now.toISOString(),
+                lastEarnedPoints: earnedPoints
+            });
+        } else {
+            // Increment the count
+            const completionRef = doc(db, 'userTaskCompletions', existingCompletion.id);
+            await updateDoc(completionRef, {
+                count: increment(1),
+                lastEarnedPoints: earnedPoints
+            });
+        }
+    } else {
+        // Create new record
+        await addDoc(collection(db, "userTaskCompletions"), {
+            userId,
+            taskId,
+            count: 1,
+            firstCompletionTimestamp: now.toISOString(),
+            lastEarnedPoints: earnedPoints
+        });
+    }
+};
+
+export const resetUserTasks = async (userId: string): Promise<void> => {
+    const q = query(collection(db, 'userTaskCompletions'), where('userId', '==', userId));
+    const querySnapshot = await getDocs(q);
+    const batch = writeBatch(db);
+    querySnapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+    });
+    await batch.commit();
+};
+
 
 // Deletion Functions
 export const deleteUserAndData = async (userId: string) => {
@@ -184,6 +240,11 @@ export const deleteUserAndData = async (userId: string) => {
     const notificationsQuery = query(collection(db, 'notifications'), where('userId', '==', userId));
     const notificationsSnapshot = await getDocs(notificationsQuery);
     notificationsSnapshot.forEach(doc => batch.delete(doc.ref));
+    
+    // Find and delete task completions
+    const taskCompletionsQuery = query(collection(db, 'userTaskCompletions'), where('userId', '==', userId));
+    const taskCompletionsSnapshot = await getDocs(taskCompletionsQuery);
+    taskCompletionsSnapshot.forEach(doc => batch.delete(doc.ref));
 
     await batch.commit();
 };

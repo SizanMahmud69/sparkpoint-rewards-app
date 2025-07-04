@@ -8,8 +8,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Timer } from 'lucide-react';
 import { useUserPoints } from '@/context/UserPointsContext';
 import { cn } from '@/lib/utils';
-import type { Task } from '@/lib/types';
-import { addPointTransaction, updateUserPoints } from '@/lib/storage';
+import type { Task, UserTaskCompletion } from '@/lib/types';
+import { addPointTransaction, updateUserPoints, getUserTaskCompletion, recordTaskCompletion } from '@/lib/storage';
 
 const segments = [
     { color: '#a0c4ff', label: '10' },
@@ -31,57 +31,46 @@ export function SpinWheelTask({ task }: { task: Task }) {
     const [rotation, setRotation] = useState(0);
     const [isDisabled, setIsDisabled] = useState(false);
     const [timeLeft, setTimeLeft] = useState(0);
-    const [completions, setCompletions] = useState(0);
     const limitPerDay = task.limitPerDay ?? 1;
 
-    const taskUsageKey = user ? `task_usage_${user.id}_${task.id}` : null;
-
     useEffect(() => {
+        if (!user || !task.id) return;
         if (limitPerDay === 0) {
             setIsDisabled(true);
             return;
         }
 
-        if (!taskUsageKey) return;
-
-        const usageDataString = localStorage.getItem(taskUsageKey);
-        if (usageDataString) {
-            try {
-                const usageData = JSON.parse(usageDataString);
-                const firstCompletionTime = new Date(usageData.firstCompletionTimestamp).getTime();
+        const fetchTaskStatus = async () => {
+            const completion = await getUserTaskCompletion(user.id, task.id);
+            if (completion) {
+                const firstCompletionTime = new Date(completion.firstCompletionTimestamp).getTime();
                 const now = new Date().getTime();
                 const twentyFourHours = 24 * 60 * 60 * 1000;
 
                 if (now - firstCompletionTime > twentyFourHours) {
-                    localStorage.removeItem(taskUsageKey);
                     setIsDisabled(false);
-                    setCompletions(0);
                     setTimeLeft(0);
                 } else {
-                    setCompletions(usageData.count);
-                    if (usageData.count >= limitPerDay) {
+                    if (completion.count >= limitPerDay) {
                         setIsDisabled(true);
                         setTimeLeft(twentyFourHours - (now - firstCompletionTime));
                     } else {
                         setIsDisabled(false);
                     }
                 }
-            } catch (error) {
-                console.error("Error parsing task usage data:", error);
-                localStorage.removeItem(taskUsageKey);
+            } else {
+                setIsDisabled(false);
             }
-        } else {
-            setIsDisabled(false);
-            setCompletions(0);
-        }
-    }, [taskUsageKey, limitPerDay]);
+        };
+
+        fetchTaskStatus();
+    }, [user, task.id, limitPerDay, isSpinning]);
+
 
      useEffect(() => {
         if (!isDisabled || timeLeft <= 0) {
             if (isDisabled && timeLeft <= 0 && limitPerDay !== 0) {
-                 localStorage.removeItem(taskUsageKey);
                  setIsDisabled(false);
-                 setCompletions(0);
             }
             return;
         }
@@ -94,11 +83,12 @@ export function SpinWheelTask({ task }: { task: Task }) {
         }, 1000);
         
         return () => clearInterval(intervalId);
-    }, [timeLeft, isDisabled, taskUsageKey, limitPerDay]);
+    }, [timeLeft, isDisabled, limitPerDay]);
 
 
     const handleSpin = () => {
-        if (isSpinning || isDisabled || !user || !taskUsageKey) return;
+        if (isSpinning || isDisabled || !user ) return;
+        
         setIsSpinning(true);
         const randomSpins = Math.floor(Math.random() * 5) + 5;
         const stopAngle = Math.floor(Math.random() * 360);
@@ -115,43 +105,21 @@ export function SpinWheelTask({ task }: { task: Task }) {
                 const earnedPoints = parseInt(prize.label, 10);
                 await updateUserPoints(user.id, earnedPoints);
                 contextUpdatePoints(earnedPoints);
+                
                 await addPointTransaction({
                     userId: user.id,
                     task: task.title,
                     points: earnedPoints,
                     date: new Date().toISOString(),
                 });
+                
+                await recordTaskCompletion(user.id, task.id, earnedPoints);
+
                 toast({
                     title: 'Congratulations!',
                     description: `You won ${prize.label} points!`,
                 });
                 
-                let newCount = 1;
-                try {
-                    const usageDataString = localStorage.getItem(taskUsageKey);
-                    if (usageDataString) {
-                        const usageData = JSON.parse(usageDataString);
-                        newCount = usageData.count + 1;
-                        const newUsageData = { ...usageData, count: newCount };
-                        localStorage.setItem(taskUsageKey, JSON.stringify(newUsageData));
-                    } else {
-                        const newUsageData = {
-                            count: 1,
-                            firstCompletionTimestamp: new Date().toISOString()
-                        };
-                        localStorage.setItem(taskUsageKey, JSON.stringify(newUsageData));
-                    }
-                } catch (error) {
-                    console.error("Error updating spin wheel usage data:", error);
-                }
-                
-                setCompletions(newCount);
-
-                if (newCount >= limitPerDay) {
-                    setIsDisabled(true);
-                    const twentyFourHours = 24 * 60 * 60 * 1000;
-                    setTimeLeft(twentyFourHours);
-                }
             } catch (error) {
                 console.error("Failed to process spin result:", error);
                  toast({

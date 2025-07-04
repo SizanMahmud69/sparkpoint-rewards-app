@@ -16,16 +16,17 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle, Search } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Search, RotateCw } from 'lucide-react';
 import type { User } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { AddUserDialog } from './AddUserDialog';
-import { updateUserStatus, deleteUserAndData, addUser } from '@/lib/storage';
+import { updateUserStatus, deleteUserAndData, addUser, resetUserTasks } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -59,6 +60,8 @@ export function UserTable({ users, onUsersUpdate, loading }: UserTableProps) {
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = React.useState(false);
   const [isAlertOpen, setIsAlertOpen] = React.useState(false);
   const [userToDelete, setUserToDelete] = React.useState<User | null>(null);
+  const [isResetAlertOpen, setIsResetAlertOpen] = React.useState(false);
+  const [userToReset, setUserToReset] = React.useState<User | null>(null);
   const { toast } = useToast();
 
   const handleStatusChange = async (id: string, name: string, newStatus: User['status']) => {
@@ -100,6 +103,22 @@ export function UserTable({ users, onUsersUpdate, loading }: UserTableProps) {
     onUsersUpdate();
   };
   
+  const openResetConfirm = (user: User) => {
+    setUserToReset(user);
+    setIsResetAlertOpen(true);
+  };
+
+  const handleResetTasks = async () => {
+      if (!userToReset) return;
+      await resetUserTasks(userToReset.id);
+      toast({
+          title: "Tasks Reset",
+          description: `Daily task limits for "${userToReset.name}" have been reset.`,
+      });
+      setIsResetAlertOpen(false);
+      setUserToReset(null);
+  };
+
   const filteredUsers = users.filter(user => 
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -184,6 +203,11 @@ export function UserTable({ users, onUsersUpdate, loading }: UserTableProps) {
                         <DropdownMenuItem asChild>
                           <Link href={`/admin/users/${user.id}`}>View Details</Link>
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => openResetConfirm(user)}>
+                          <RotateCw className="mr-2 h-4 w-4" />
+                          Reset Tasks
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                          {user.status === 'Active' ? (
                           <DropdownMenuItem onClick={() => handleStatusChange(user.id, user.name, 'Suspended')}>
                             Suspend User
@@ -228,6 +252,22 @@ export function UserTable({ users, onUsersUpdate, loading }: UserTableProps) {
             <AlertDialogCancel onClick={() => setUserToDelete(null)}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteUser} className="bg-destructive hover:bg-destructive/90">
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={isResetAlertOpen} onOpenChange={setIsResetAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+               This will reset all daily task completions for <span className="font-bold">{userToReset?.name}</span>. They will be able to complete their daily tasks again immediately.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setUserToReset(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleResetTasks}>
+              Reset
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

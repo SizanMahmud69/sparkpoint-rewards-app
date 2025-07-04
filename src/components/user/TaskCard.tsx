@@ -10,7 +10,7 @@ import { Calendar, HeartCrack, VenetianMask, RotateCw, Timer, Gift, Dices, Loade
 import { cn } from '@/lib/utils';
 import type { Task } from '@/lib/types';
 import { useUserPoints } from '@/context/UserPointsContext';
-import { addPointTransaction, updateUserPoints } from '@/lib/storage';
+import { addPointTransaction, updateUserPoints, getUserTaskCompletion, recordTaskCompletion } from '@/lib/storage';
 
 const iconMap: { [key: string]: React.ComponentType<LucideProps> } = {
   Calendar,
@@ -30,71 +30,52 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
   const [isCompleting, setIsCompleting] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [earnedPoints, setEarnedPoints] = useState<number | null>(null);
-  const [completions, setCompletions] = useState(0);
-
-  const taskUsageKey = user ? `task_usage_${user.id}_${id}` : null;
-  const lastPointsKey = user ? `task_last_points_${user.id}_${id}` : null;
 
   const Icon = iconMap[icon] || Gift;
 
   useEffect(() => {
+    if (!user || !id) return;
     if (limitPerDay === 0) {
-        setIsDisabled(true);
-        return;
+      setIsDisabled(true);
+      return;
     }
 
-    if (!taskUsageKey || !lastPointsKey) return;
-    
-    const usageDataString = localStorage.getItem(taskUsageKey);
-    const lastPoints = localStorage.getItem(lastPointsKey);
+    const fetchTaskStatus = async () => {
+      const completion = await getUserTaskCompletion(user.id, id);
+      if (completion) {
+        const firstCompletionTime = new Date(completion.firstCompletionTimestamp).getTime();
+        const now = new Date().getTime();
+        const twentyFourHours = 24 * 60 * 60 * 1000;
 
-    if (usageDataString) {
-        try {
-            const usageData = JSON.parse(usageDataString);
-            const firstCompletionTime = new Date(usageData.firstCompletionTimestamp).getTime();
-            const now = new Date().getTime();
-            const twentyFourHours = 24 * 60 * 60 * 1000;
-
-            if (now - firstCompletionTime > twentyFourHours) {
-                localStorage.removeItem(taskUsageKey);
-                localStorage.removeItem(lastPointsKey);
-                setIsDisabled(false);
-                setCompletions(0);
-                setTimeLeft(0);
-                setEarnedPoints(null);
-            } else {
-                setCompletions(usageData.count);
-                if (usageData.count >= limitPerDay) {
-                    setIsDisabled(true);
-                    setTimeLeft(twentyFourHours - (now - firstCompletionTime));
-                    if (lastPoints) {
-                        setEarnedPoints(parseInt(lastPoints, 10));
-                    }
-                } else {
-                     setIsDisabled(false);
-                     setEarnedPoints(null);
-                }
-            }
-        } catch (error) {
-            console.error("Error parsing task usage data:", error);
-            localStorage.removeItem(taskUsageKey);
-            localStorage.removeItem(lastPointsKey);
+        if (now - firstCompletionTime > twentyFourHours) {
+          setIsDisabled(false);
+          setTimeLeft(0);
+          setEarnedPoints(null);
+        } else {
+          if (completion.count >= limitPerDay) {
+            setIsDisabled(true);
+            setTimeLeft(twentyFourHours - (now - firstCompletionTime));
+            setEarnedPoints(completion.lastEarnedPoints ?? null);
+          } else {
+            setIsDisabled(false);
+            setEarnedPoints(null);
+          }
         }
-    } else {
-      setIsDisabled(false);
-      setCompletions(0);
-      setEarnedPoints(null);
-    }
-  }, [taskUsageKey, lastPointsKey, limitPerDay]);
+      } else {
+        setIsDisabled(false);
+        setEarnedPoints(null);
+      }
+    };
+    
+    fetchTaskStatus();
+  }, [user, id, limitPerDay, isCompleting]);
+
 
   useEffect(() => {
     if (!isDisabled || timeLeft <= 0) {
       if (isDisabled && timeLeft <= 0 && limitPerDay !== 0) {
-        localStorage.removeItem(taskUsageKey);
-        localStorage.removeItem(lastPointsKey);
         setEarnedPoints(null);
         setIsDisabled(false);
-        setCompletions(0);
       }
       return;
     }
@@ -109,10 +90,10 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
     }, 1000);
 
     return () => clearInterval(intervalId);
-  }, [timeLeft, isDisabled, taskUsageKey, lastPointsKey, limitPerDay]);
+  }, [timeLeft, isDisabled, limitPerDay]);
 
   const handleTaskComplete = async () => {
-    if (!user || !taskUsageKey || !lastPointsKey || isDisabled || isCompleting) return;
+    if (!user || !id || isDisabled || isCompleting) return;
     
     setIsCompleting(true);
     
@@ -138,39 +119,13 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
             date: new Date().toISOString(),
         });
 
+        await recordTaskCompletion(user.id, id, finalEarnedPoints);
+
         toast({
         title: 'Task Complete!',
         description: `You earned ${finalEarnedPoints} points from ${title}.`,
         });
         
-        let newCount = 1;
-        try {
-            const usageDataString = localStorage.getItem(taskUsageKey);
-            if (usageDataString) {
-                const usageData = JSON.parse(usageDataString);
-                newCount = usageData.count + 1;
-                const newUsageData = { ...usageData, count: newCount };
-                localStorage.setItem(taskUsageKey, JSON.stringify(newUsageData));
-            } else {
-                const newUsageData = {
-                    count: 1,
-                    firstCompletionTimestamp: new Date().toISOString()
-                };
-                localStorage.setItem(taskUsageKey, JSON.stringify(newUsageData));
-            }
-        } catch (error) {
-             console.error("Error updating task usage data:", error);
-        }
-        
-        localStorage.setItem(lastPointsKey, String(finalEarnedPoints));
-        setEarnedPoints(finalEarnedPoints);
-        setCompletions(newCount);
-
-        if (newCount >= limitPerDay) {
-            setIsDisabled(true);
-            const twentyFourHours = 24 * 60 * 60 * 1000;
-            setTimeLeft(twentyFourHours);
-        }
     } catch (error) {
         console.error("Failed to complete task:", error);
         toast({

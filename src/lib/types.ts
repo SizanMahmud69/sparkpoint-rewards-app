@@ -60,3 +60,12 @@ export type Notification = {
   read: boolean;
   date: string;
 };
+
+export type UserTaskCompletion = {
+  id: string;
+  userId: string;
+  taskId: string;
+  firstCompletionTimestamp: string;
+  count: number;
+  lastEarnedPoints?: number;
+};
