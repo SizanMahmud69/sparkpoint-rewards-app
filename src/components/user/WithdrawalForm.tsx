@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -9,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { mockPaymentMethods } from '@/lib/data';
 import type { PaymentMethod } from '@/lib/types';
 import { History, Loader2 } from 'lucide-react';
 
@@ -17,7 +17,7 @@ const createWithdrawalSchema = (minPoints: number, maxPoints: number) => z.objec
   points: z.coerce
     .number()
     .min(minPoints, { message: `Minimum withdrawal is ${minPoints} points.` })
-    .max(maxPoints, { message: `You cannot withdraw more than your balance.` }),
+    .max(maxPoints, { message: `You do not have enough points for this withdrawal.` }),
   method: z.string({ required_error: 'Please select a payment method.' }),
   details: z.string().min(1, { message: 'Withdrawal details are required.' }),
 });
@@ -25,6 +25,7 @@ const createWithdrawalSchema = (minPoints: number, maxPoints: number) => z.objec
 export type WithdrawalFormValues = z.infer<ReturnType<typeof createWithdrawalSchema>>;
 
 interface WithdrawalFormProps {
+    paymentMethods: PaymentMethod[];
     minWithdrawalPoints?: number;
     onHistoryClick: () => void;
     onSubmitRequest: (values: WithdrawalFormValues) => void;
@@ -32,13 +33,13 @@ interface WithdrawalFormProps {
 }
 
 export function WithdrawalForm({ 
+  paymentMethods,
   minWithdrawalPoints = 1000, 
   onHistoryClick,
   onSubmitRequest,
   currentBalance
 }: WithdrawalFormProps) {
-  const paymentMethods = mockPaymentMethods.filter(m => m.enabled);
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(paymentMethods[0] || {} as PaymentMethod);
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | undefined>(paymentMethods[0]);
   const [isLoading, setIsLoading] = useState(false);
 
   const withdrawalSchema = createWithdrawalSchema(minWithdrawalPoints, currentBalance);
@@ -53,7 +54,7 @@ export function WithdrawalForm({
   });
 
   const handleMethodChange = (value: string) => {
-    const method = paymentMethods.find(m => m.value === value) || paymentMethods[0];
+    const method = paymentMethods.find(m => m.value === value);
     setSelectedMethod(method);
     form.setValue('method', value);
     form.clearErrors('method');
@@ -63,7 +64,9 @@ export function WithdrawalForm({
     setIsLoading(true);
     setTimeout(() => {
         onSubmitRequest(data);
-        form.reset({ points: minWithdrawalPoints, method: selectedMethod.value, details: '' });
+        if (selectedMethod) {
+            form.reset({ points: minWithdrawalPoints, method: selectedMethod.value, details: '' });
+        }
         setIsLoading(false);
     }, 1000);
   };
@@ -98,7 +101,7 @@ export function WithdrawalForm({
           
           <div className="space-y-2">
             <Label htmlFor="method">Payment Method</Label>
-            <Select onValueChange={handleMethodChange} defaultValue={selectedMethod.value} name={form.name}>
+            <Select onValueChange={handleMethodChange} defaultValue={selectedMethod?.value} name={form.name}>
               <SelectTrigger id="method">
                 <SelectValue placeholder="Select a method" />
               </SelectTrigger>
@@ -109,11 +112,11 @@ export function WithdrawalForm({
             {form.formState.errors.method && <p className="text-sm text-destructive">{form.formState.errors.method.message}</p>}
           </div>
 
-          <div className="space-y-2">
+          {selectedMethod && <div className="space-y-2">
             <Label htmlFor="details">{selectedMethod.label}</Label>
             <Input id="details" placeholder={selectedMethod.placeholder} {...form.register('details')} />
             {form.formState.errors.details && <p className="text-sm text-destructive">{form.formState.errors.details.message}</p>}
-          </div>
+          </div>}
 
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

@@ -2,11 +2,10 @@
 'use client';
 
 import type { User } from './types';
+import { getUsers, saveUsers } from './storage';
 
-const USERS_KEY = 'sparkpoint_users';
 const LOGGED_IN_USER_KEY = 'sparkpoint_logged_in_user';
 
-// Helper to safely access localStorage
 const getLocalStorage = () => {
   if (typeof window !== 'undefined' && window.localStorage) {
     return window.localStorage;
@@ -14,23 +13,6 @@ const getLocalStorage = () => {
   return null;
 };
 
-// Function to get all users from localStorage
-const getUsers = (): User[] => {
-  const storage = getLocalStorage();
-  if (!storage) return [];
-  const usersJson = storage.getItem(USERS_KEY);
-  return usersJson ? JSON.parse(usersJson) : [];
-};
-
-// Function to save all users to localStorage
-const saveUsers = (users: User[]) => {
-  const storage = getLocalStorage();
-  if (storage) {
-    storage.setItem(USERS_KEY, JSON.stringify(users));
-  }
-};
-
-// Register a new user
 export const registerUser = (name: string, email: string, password: string): { success: boolean; message: string; user?: User } => {
   const users = getUsers();
   const existingUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
@@ -39,25 +21,22 @@ export const registerUser = (name: string, email: string, password: string): { s
     return { success: false, message: 'An account with this email already exists.' };
   }
   
-  // In a real app, you would hash the password. For this simulation, we store it in plain text.
   const newUser: User = {
     id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,
     name,
     email,
-    password, // Storing password for simulation purposes. Not for production!
-    points: 50, // Bonus points for registering
+    password, 
+    points: 50, 
     registrationDate: new Date().toISOString().split('T')[0],
     status: 'Active',
     avatar: 'https://placehold.co/100x100.png',
   };
 
-  users.push(newUser);
-  saveUsers(users);
+  saveUsers([...users, newUser]);
   
   return { success: true, message: 'Registration successful!', user: newUser };
 };
 
-// Login a user
 export const loginUser = (email: string, password: string): User | null => {
   const users = getUsers();
   const user = users.find(
@@ -66,17 +45,23 @@ export const loginUser = (email: string, password: string): User | null => {
   return user || null;
 };
 
-// Set the currently logged-in user
 export const setLoggedInUser = (user: User) => {
   const storage = getLocalStorage();
   if (storage) {
-    // Don't store the password in the logged-in session data
     const { password, ...userToStore } = user;
     storage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(userToStore));
+    
+    const allUsers = getUsers();
+    const userIndex = allUsers.findIndex(u => u.id === user.id);
+    if (userIndex !== -1) {
+        allUsers[userIndex] = user;
+    } else {
+        allUsers.push(user);
+    }
+    saveUsers(allUsers);
   }
 };
 
-// Get the currently logged-in user
 export const getLoggedInUser = (): Omit<User, 'password'> | null => {
   const storage = getLocalStorage();
   if (!storage) return null;
@@ -84,7 +69,6 @@ export const getLoggedInUser = (): Omit<User, 'password'> | null => {
   return userJson ? JSON.parse(userJson) : null;
 };
 
-// Logout the user
 export const logoutUser = () => {
   const storage = getLocalStorage();
   if (storage) {

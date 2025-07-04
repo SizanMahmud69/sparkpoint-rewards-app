@@ -6,10 +6,11 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import type { LucideProps } from 'lucide-react';
-import { Calendar, HeartCrack, VenetianMask, RotateCw, Timer, Gift } from 'lucide-react';
+import { Calendar, HeartCrack, VenetianMask, RotateCw, Timer, Gift, Dices } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Task } from '@/lib/types';
 import { useUserPoints } from '@/context/UserPointsContext';
+import { addPointTransaction } from '@/lib/storage';
 
 const iconMap: { [key: string]: React.ComponentType<LucideProps> } = {
   Calendar,
@@ -17,13 +18,14 @@ const iconMap: { [key: string]: React.ComponentType<LucideProps> } = {
   VenetianMask,
   RotateCw,
   Gift,
+  Dices,
 };
 
 type TaskCardProps = Task;
 
 export function TaskCard({ id, title, description, points, icon, color, actionText }: TaskCardProps) {
   const { toast } = useToast();
-  const { updatePoints } = useUserPoints();
+  const { user, updatePoints } = useUserPoints();
   const [isDisabled, setIsDisabled] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const taskKey = `task_cooldown_${id}`;
@@ -56,6 +58,8 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
   }, [timeLeft, isDisabled, taskKey]);
 
   const handleTaskComplete = () => {
+    if (!user) return;
+    
     let possiblePoints: number[];
     if (points.includes('/')) {
         possiblePoints = points.split('/').map(p => parseInt(p.trim(), 10));
@@ -68,6 +72,13 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
     const earnedPoints = possiblePoints[Math.floor(Math.random() * possiblePoints.length)] || possiblePoints[0];
 
     updatePoints(earnedPoints);
+    addPointTransaction({
+        userId: user.id,
+        task: title,
+        points: earnedPoints,
+        date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+    });
+
     toast({
       title: 'Task Complete!',
       description: `You earned ${earnedPoints} points from ${title}.`,

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -20,22 +21,34 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
+import { getPaymentMethods, savePaymentMethods } from '@/lib/storage';
 
-export function WithdrawalFormManagement({ initialMethods }: { initialMethods: PaymentMethod[] }) {
+interface WithdrawalFormManagementProps {
+  initialMethods: PaymentMethod[];
+  onMethodsUpdate: () => void;
+}
+
+export function WithdrawalFormManagement({ initialMethods, onMethodsUpdate }: WithdrawalFormManagementProps) {
   const [methods, setMethods] = React.useState(initialMethods);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [isAlertOpen, setIsAlertOpen] = React.useState(false);
   const [methodToDelete, setMethodToDelete] = React.useState<PaymentMethod | null>(null);
   const { toast } = useToast();
 
+  React.useEffect(() => {
+    setMethods(initialMethods);
+  }, [initialMethods]);
+
   const handleEnabledChange = (value: string, enabled: boolean) => {
-    // In a real app, you'd make an API call here.
-    setMethods(methods.map(method => method.value === value ? { ...method, enabled } : method));
+    const updatedMethods = methods.map(method => method.value === value ? { ...method, enabled } : method);
+    savePaymentMethods(updatedMethods);
+    onMethodsUpdate();
   };
 
   const handleAddMethod = (newMethod: PaymentMethod) => {
-    // In a real app, you'd make an API call here to persist the new method.
-    setMethods(prevMethods => [...prevMethods, newMethod]);
+    const currentMethods = getPaymentMethods();
+    savePaymentMethods([...currentMethods, newMethod]);
+    onMethodsUpdate();
   };
 
   const openDeleteConfirm = (method: PaymentMethod) => {
@@ -45,8 +58,8 @@ export function WithdrawalFormManagement({ initialMethods }: { initialMethods: P
 
   const handleDeleteMethod = () => {
     if (!methodToDelete) return;
-    // In a real app, you'd make an API call here to delete the method.
-    setMethods(methods.filter(method => method.value !== methodToDelete.value));
+    const currentMethods = getPaymentMethods();
+    savePaymentMethods(currentMethods.filter(method => method.value !== methodToDelete.value));
     toast({
       title: 'Method Deleted',
       description: `The "${methodToDelete.value}" payment method has been removed.`,
@@ -54,6 +67,7 @@ export function WithdrawalFormManagement({ initialMethods }: { initialMethods: P
     });
     setIsAlertOpen(false);
     setMethodToDelete(null);
+    onMethodsUpdate();
   };
 
   return (

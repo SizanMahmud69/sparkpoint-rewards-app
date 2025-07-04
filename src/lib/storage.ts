@@ -1,0 +1,68 @@
+
+'use client';
+
+import type { User, Withdrawal, Task, PaymentMethod, PointTransaction } from './types';
+import { mockUsers, mockWithdrawals, mockTasks, mockPaymentMethods, mockPointHistory } from './data';
+
+const USERS_KEY = 'sparkpoint_users_v2';
+const WITHDRAWALS_KEY = 'sparkpoint_withdrawals_v2';
+const TASKS_KEY = 'sparkpoint_tasks_v2';
+const PAYMENT_METHODS_KEY = 'sparkpoint_payment_methods_v2';
+const POINT_HISTORY_KEY = 'sparkpoint_point_history_v2';
+
+const getLocalStorage = () => {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    return window.localStorage;
+  }
+  return null;
+};
+
+const getFromStorage = <T>(key: string, mockData: T[]): T[] => {
+    const storage = getLocalStorage();
+    if (!storage) return []; 
+    const dataJson = storage.getItem(key);
+    if (dataJson) {
+        try {
+            return JSON.parse(dataJson);
+        } catch (e) {
+            console.error(`Failed to parse ${key} from localStorage`, e);
+            return mockData;
+        }
+    } else {
+        storage.setItem(key, JSON.stringify(mockData));
+        return mockData;
+    }
+};
+
+const saveToStorage = <T>(key: string, data: T[]) => {
+    const storage = getLocalStorage();
+    if (storage) {
+        storage.setItem(key, JSON.stringify(data));
+    }
+};
+
+export const getUsers = (): User[] => getFromStorage<User>(USERS_KEY, mockUsers);
+export const saveUsers = (users: User[]) => saveToStorage<User>(USERS_KEY, users);
+
+export const getWithdrawals = (): Withdrawal[] => getFromStorage<Withdrawal>(WITHDRAWALS_KEY, mockWithdrawals);
+export const saveWithdrawals = (withdrawals: Withdrawal[]) => saveToStorage<Withdrawal>(WITHDRAWALS_KEY, withdrawals);
+
+export const getTasks = (): Task[] => getFromStorage<Task>(TASKS_KEY, mockTasks);
+export const saveTasks = (tasks: Task[]) => saveToStorage<Task>(TASKS_KEY, tasks);
+
+export const getPaymentMethods = (): PaymentMethod[] => getFromStorage<PaymentMethod>(PAYMENT_METHODS_KEY, mockPaymentMethods);
+export const savePaymentMethods = (methods: PaymentMethod[]) => saveToStorage<PaymentMethod>(PAYMENT_METHODS_KEY, methods);
+
+export const getPointHistoryForUser = (userId: number): PointTransaction[] => {
+    const allHistory = getFromStorage<PointTransaction>(POINT_HISTORY_KEY, mockPointHistory);
+    return allHistory.filter(t => t.userId === userId);
+}
+
+export const addPointTransaction = (transaction: Omit<PointTransaction, 'id'>) => {
+    const allHistory = getFromStorage<PointTransaction>(POINT_HISTORY_KEY, mockPointHistory);
+    const newTransaction: PointTransaction = {
+        ...transaction,
+        id: allHistory.length > 0 ? Math.max(...allHistory.map(t => t.id)) + 1 : 1,
+    }
+    saveToStorage<PointTransaction>(POINT_HISTORY_KEY, [newTransaction, ...allHistory]);
+}

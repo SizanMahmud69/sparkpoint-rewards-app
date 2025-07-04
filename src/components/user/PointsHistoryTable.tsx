@@ -1,3 +1,4 @@
+
 import {
   Table,
   TableBody,
@@ -21,18 +22,26 @@ export function PointsHistoryTable({ transactions }: { transactions: PointTransa
         </TableRow>
       </TableHeader>
       <TableBody>
-        {transactions.map((transaction) => (
-          <TableRow key={transaction.id}>
-            <TableCell className="font-medium">{transaction.task}</TableCell>
-            <TableCell>{transaction.date}</TableCell>
-            <TableCell className="text-right">
-              <Badge variant="default" className='bg-accent hover:bg-accent/90 text-accent-foreground'>
-                <PlusCircle className="mr-1 h-3 w-3" />
-                {transaction.points}
-              </Badge>
+        {transactions.length > 0 ? (
+          transactions.map((transaction) => (
+            <TableRow key={transaction.id}>
+              <TableCell className="font-medium">{transaction.task}</TableCell>
+              <TableCell>{transaction.date}</TableCell>
+              <TableCell className="text-right">
+                <Badge variant="default" className='bg-accent hover:bg-accent/90 text-accent-foreground'>
+                  <PlusCircle className="mr-1 h-3 w-3" />
+                  {transaction.points}
+                </Badge>
+              </TableCell>
+            </TableRow>
+          ))
+        ) : (
+          <TableRow>
+            <TableCell colSpan={3} className="h-24 text-center">
+              No points history found.
             </TableCell>
           </TableRow>
-        ))}
+        )}
       </TableBody>
     </Table>
   );

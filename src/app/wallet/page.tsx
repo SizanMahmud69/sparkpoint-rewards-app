@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { PointsHistoryTable } from "@/components/user/PointsHistoryTable";
 import { WithdrawalForm, type WithdrawalFormValues } from "@/components/user/WithdrawalForm";
-import { mockPointHistory, mockWithdrawals, mockUsers } from "@/lib/data";
 import { Coins, DollarSign, History } from 'lucide-react';
 import { WithdrawalTable } from "@/components/admin/WithdrawalTable";
 import { Button } from '@/components/ui/button';
@@ -19,20 +18,22 @@ import {
 import type { PointTransaction, Withdrawal } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useUserPoints } from '@/context/UserPointsContext';
+import { getWithdrawals, saveWithdrawals, getUsers, getPointHistoryForUser, getPaymentMethods } from '@/lib/storage';
 
 export default function WalletPage() {
   const { toast } = useToast();
   const { user, points, updatePoints } = useUserPoints();
 
   const [withdrawalHistory, setWithdrawalHistory] = useState<Withdrawal[]>([]);
+  const [pointHistory, setPointHistory] = useState<PointTransaction[]>([]);
+  const [allUsers, setAllUsers] = useState(getUsers());
 
   useEffect(() => {
     if (user) {
-      setWithdrawalHistory(mockWithdrawals.filter(w => w.userId === user.id));
+      setWithdrawalHistory(getWithdrawals().filter(w => w.userId === user.id));
+      setPointHistory(getPointHistoryForUser(user.id));
     }
   }, [user]);
-
-  const [pointHistory, setPointHistory] = useState<PointTransaction[]>(mockPointHistory);
 
   const [isPointsHistoryDialogOpen, setIsPointsHistoryDialogOpen] = useState(false);
   const [isWithdrawalHistoryDialogOpen, setIsWithdrawalHistoryDialogOpen] = useState(false);
@@ -67,6 +68,9 @@ export default function WalletPage() {
       date: new Date().toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }),
       status: 'Pending',
     };
+
+    const allWithdrawals = getWithdrawals();
+    saveWithdrawals([newWithdrawal, ...allWithdrawals]);
     setWithdrawalHistory(prev => [newWithdrawal, ...prev]);
 
     toast({
@@ -120,6 +124,7 @@ export default function WalletPage() {
 
           <div className="h-full">
             <WithdrawalForm 
+              paymentMethods={getPaymentMethods().filter(m => m.enabled)}
               minWithdrawalPoints={minWithdrawalPoints}
               onHistoryClick={() => setIsWithdrawalHistoryDialogOpen(true)}
               onSubmitRequest={handleWithdrawalRequest}
@@ -152,7 +157,7 @@ export default function WalletPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="max-h-[60vh] overflow-y-auto pr-4">
-            <WithdrawalTable withdrawals={withdrawalHistory} users={mockUsers} isUserView={true} />
+            <WithdrawalTable withdrawals={withdrawalHistory} users={allUsers} isUserView={true} />
           </div>
         </DialogContent>
       </Dialog>

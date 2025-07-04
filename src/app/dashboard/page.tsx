@@ -1,18 +1,26 @@
 
 "use client";
 
+import { useState, useEffect } from 'react';
 import { TaskCard } from '@/components/user/TaskCard';
-import { Coins, Trophy } from 'lucide-react';
-import { mockTasks } from '@/lib/data';
+import { Coins, Trophy, Dices } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SpinWheelTask } from '@/components/user/SpinWheelTask';
 import { useUserPoints } from '@/context/UserPointsContext';
+import { getTasks } from '@/lib/storage';
+import type { Task } from '@/lib/types';
 
 export default function DashboardPage() {
   const { user, points } = useUserPoints();
-  const enabledTasks = mockTasks.filter(task => task.enabled);
-  const spinWheelTask = enabledTasks.find(task => task.title === 'Spin the Wheel');
-  const otherTasks = enabledTasks.filter(task => task.title !== 'Spin the Wheel');
+  const [tasks, setTasks] = useState<Task[]>([]);
+
+  useEffect(() => {
+    setTasks(getTasks());
+  }, []);
+  
+  const enabledTasks = tasks.filter(task => task.enabled);
+  const spinWheelTask = enabledTasks.find(task => task.icon === 'Dices');
+  const otherTasks = enabledTasks.filter(task => task.icon !== 'Dices');
 
 
   return (

@@ -1,4 +1,5 @@
 
+
 export type User = {
   id: number;
   name: string;
@@ -24,6 +25,7 @@ export type Withdrawal = {
 
 export type PointTransaction = {
   id: number;
+  userId: number;
   task: string;
   points: number;
   date: string;

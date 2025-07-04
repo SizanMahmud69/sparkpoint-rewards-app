@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -23,6 +24,7 @@ import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { AddUserDialog } from './AddUserDialog';
+import { getUsers, saveUsers } from '@/lib/storage';
 
 const getStatusBadgeVariant = (status: User['status']): "default" | "destructive" => {
   switch (status) {
@@ -33,26 +35,32 @@ const getStatusBadgeVariant = (status: User['status']): "default" | "destructive
   }
 };
 
+interface UserTableProps {
+  users: User[];
+  onUsersUpdate: () => void;
+}
 
-export function UserTable({ users: initialUsers }: { users: User[] }) {
-  const [users, setUsers] = React.useState(initialUsers);
+export function UserTable({ users, onUsersUpdate }: UserTableProps) {
   const [searchTerm, setSearchTerm] = React.useState('');
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = React.useState(false);
 
   const handleStatusChange = (id: number, newStatus: User['status']) => {
-    // In a real app, this would be an API call.
-    setUsers(users.map(u => u.id === id ? { ...u, status: newStatus } : u));
+    const currentUsers = getUsers();
+    const updatedUsers = currentUsers.map(u => u.id === id ? { ...u, status: newStatus } : u);
+    saveUsers(updatedUsers);
+    onUsersUpdate();
   };
 
   const handleAddUser = (newUser: Omit<User, 'id' | 'registrationDate' | 'avatar'>) => {
-    // In a real app, you'd get the ID from the backend response.
+    const currentUsers = getUsers();
     const userWithId: User = {
       ...newUser,
-      id: Math.max(...users.map(u => u.id), 0) + 1, // Simple ID generation for mock
-      registrationDate: new Date().toISOString().split('T')[0], // Format as YYYY-MM-DD
+      id: currentUsers.length > 0 ? Math.max(...currentUsers.map(u => u.id)) + 1 : 1,
+      registrationDate: new Date().toISOString().split('T')[0],
       avatar: 'https://placehold.co/100x100.png',
     };
-    setUsers(prevUsers => [userWithId, ...prevUsers]);
+    saveUsers([...currentUsers, userWithId]);
+    onUsersUpdate();
   };
   
   const filteredUsers = users.filter(user => 

@@ -2,8 +2,9 @@
 "use client";
 
 import type { ReactNode } from 'react';
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { getLoggedInUser, setLoggedInUser, logoutUser as authLogout } from '@/lib/auth';
+import { getUsers, saveUsers } from '@/lib/storage';
 import type { User } from '@/lib/types';
 
 interface UserPointsContextType {
@@ -22,27 +23,43 @@ export const UserPointsProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const loggedInUser = getLoggedInUser();
     if (loggedInUser) {
-      setUser(loggedInUser);
-      setPoints(loggedInUser.points);
+      const allUsers = getUsers();
+      const currentUser = allUsers.find(u => u.id === loggedInUser.id);
+      if (currentUser) {
+        const { password, ...userToDisplay } = currentUser;
+        setUser(userToDisplay);
+        setPoints(currentUser.points);
+      } else {
+        logout();
+      }
     }
   }, []);
 
-  const updatePoints = (amount: number) => {
+  const updatePoints = useCallback((amount: number) => {
     if (!user) return;
-    const newPoints = points + amount;
-    setPoints(newPoints);
     
-    const updatedUser = { ...user, points: newPoints };
-    setUser(updatedUser);
-    setLoggedInUser(updatedUser as User);
-  };
+    const allUsers = getUsers();
+    const userIndex = allUsers.findIndex(u => u.id === user.id);
+
+    if (userIndex > -1) {
+      const newPoints = allUsers[userIndex].points + amount;
+      allUsers[userIndex].points = newPoints;
+      
+      const fullUserRecord = allUsers[userIndex];
+      const { password, ...userToDisplay } = fullUserRecord;
+
+      saveUsers(allUsers);
+      setLoggedInUser(fullUserRecord);
+      setUser(userToDisplay);
+      setPoints(newPoints);
+    }
+  }, [user]);
 
   const logout = () => {
     authLogout();
     setUser(null);
     setPoints(0);
   };
-
 
   return (
     <UserPointsContext.Provider value={{ user, points, updatePoints, logout }}>

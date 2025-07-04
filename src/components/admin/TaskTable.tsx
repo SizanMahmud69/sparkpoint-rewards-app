@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -16,9 +17,10 @@ import type { LucideProps } from 'lucide-react';
 import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
-import { Calendar, HeartCrack, VenetianMask, RotateCw, PlusCircle, Coins, Gift } from 'lucide-react';
+import { Calendar, HeartCrack, VenetianMask, RotateCw, PlusCircle, Coins, Gift, Dices } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AddTaskDialog } from './AddTaskDialog';
+import { saveTasks } from '@/lib/storage';
 
 const iconMap: { [key: string]: React.ComponentType<LucideProps> } = {
   Calendar,
@@ -26,35 +28,42 @@ const iconMap: { [key: string]: React.ComponentType<LucideProps> } = {
   VenetianMask,
   RotateCw,
   Gift,
+  Dices,
 };
 
 export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
   const [tasks, setTasks] = React.useState(initialTasks);
   const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = React.useState(false);
 
+  React.useEffect(() => {
+    setTasks(initialTasks);
+  }, [initialTasks]);
+
   const handleEnabledChange = (id: number, enabled: boolean) => {
-    setTasks(currentTasks =>
-      currentTasks.map(task =>
+    const updatedTasks = tasks.map(task =>
         task.id === id ? { ...task, enabled } : task
-      )
-    );
+      );
+    setTasks(updatedTasks);
+    saveTasks(updatedTasks);
   };
 
   const handlePointsChange = (id: number, points: string) => {
-    setTasks(currentTasks =>
-      currentTasks.map(task =>
+     const updatedTasks = tasks.map(task =>
         task.id === id ? { ...task, points } : task
-      )
-    );
+      );
+    setTasks(updatedTasks);
+    saveTasks(updatedTasks);
   };
 
   const handleAddTask = (newTaskData: Omit<Task, 'id' | 'enabled'>) => {
     const newTask: Task = {
       ...newTaskData,
-      id: Math.max(...tasks.map(t => t.id), 0) + 1, // Simple ID generation for mock
-      enabled: true, // New tasks are enabled by default
+      id: tasks.length > 0 ? Math.max(...tasks.map(t => t.id)) + 1 : 1,
+      enabled: true, 
     };
-    setTasks(prevTasks => [newTask, ...prevTasks]);
+    const newTasks = [newTask, ...tasks];
+    setTasks(newTasks);
+    saveTasks(newTasks);
   };
 
 
@@ -104,8 +113,8 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
                       <Coins className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                       <Input 
                         type="text" 
-                        value={task.points}
-                        onChange={(e) => handlePointsChange(task.id, e.target.value)}
+                        defaultValue={task.points}
+                        onBlur={(e) => handlePointsChange(task.id, e.target.value)}
                         className="max-w-[150px] pl-8"
                         aria-label={`Points for ${task.title}`}
                       />
