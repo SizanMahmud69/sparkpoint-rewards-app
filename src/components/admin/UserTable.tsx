@@ -19,7 +19,7 @@ import {
   DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle, Search, RotateCw } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Search, RotateCw, FileText, Ban, UserCheck, Trash2 } from 'lucide-react';
 import type { User } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
@@ -201,23 +201,31 @@ export function UserTable({ users, onUsersUpdate, loading }: UserTableProps) {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link href={`/admin/users/${user.id}`}>View Details</Link>
+                          <Link href={`/admin/users/${user.id}`}>
+                            <FileText className="mr-2 h-4 w-4" />
+                            <span>View Details</span>
+                          </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => openResetConfirm(user)}>
                           <RotateCw className="mr-2 h-4 w-4" />
-                          Reset Tasks
+                          <span>Reset Tasks</span>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                          {user.status === 'Active' ? (
                           <DropdownMenuItem onClick={() => handleStatusChange(user.id, user.name, 'Suspended')}>
-                            Suspend User
+                            <Ban className="mr-2 h-4 w-4" />
+                            <span>Suspend User</span>
                           </DropdownMenuItem>
                         ) : (
                           <DropdownMenuItem onClick={() => handleStatusChange(user.id, user.name, 'Active')}>
-                            Activate User
+                            <UserCheck className="mr-2 h-4 w-4" />
+                            <span>Activate User</span>
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => openDeleteConfirm(user)}>Delete User</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => openDeleteConfirm(user)}>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            <span>Delete User</span>
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
