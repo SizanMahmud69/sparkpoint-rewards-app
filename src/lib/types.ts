@@ -5,6 +5,7 @@ export type User = {
   points: number;
   registrationDate: string;
   status: 'Active' | 'Suspended';
+  avatar?: string;
 };
 
 export type Withdrawal = {

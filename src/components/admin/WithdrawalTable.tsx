@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import type { Withdrawal } from '@/lib/types';
+import { mockUsers } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Button } from '../ui/button';
@@ -22,13 +23,16 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
 
 export function WithdrawalTable({ withdrawals: initialWithdrawals }: { withdrawals: Withdrawal[] }) {
   const [withdrawals, setWithdrawals] = React.useState(initialWithdrawals);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('All');
+
+  const userMap = React.useMemo(() => new Map(mockUsers.map(user => [user.id, user])), []);
 
 
   const handleStatusChange = (id: number, newStatus: Withdrawal['status']) => {
@@ -100,15 +104,25 @@ export function WithdrawalTable({ withdrawals: initialWithdrawals }: { withdrawa
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredWithdrawals.length > 0 ? filteredWithdrawals.map((w) => (
+            {filteredWithdrawals.length > 0 ? filteredWithdrawals.map((w) => {
+              const user = userMap.get(w.userId);
+              return (
               <TableRow key={w.id}>
                 <TableCell className="hidden md:table-cell">
                   <div className="font-mono text-sm">{w.date.split(' ')[0]}</div>
                   <div className="text-xs text-muted-foreground font-mono">{w.date.split(' ').slice(1).join(' ')}</div>
                 </TableCell>
                 <TableCell>
-                  <div className="font-medium">{w.userName}</div>
-                  <div className="text-xs text-muted-foreground">User ID: {w.userId}</div>
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-9 w-9 hidden sm:flex">
+                        <AvatarImage src={user?.avatar} alt={user?.name} data-ai-hint="person face" />
+                        <AvatarFallback>{w.userName.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                        <div className="font-medium">{w.userName}</div>
+                        <div className="text-xs text-muted-foreground">ID: {w.userId}</div>
+                    </div>
+                  </div>
                 </TableCell>
                 <TableCell>
                   <div className="font-medium">{w.method}</div>
@@ -144,7 +158,7 @@ export function WithdrawalTable({ withdrawals: initialWithdrawals }: { withdrawa
                     )}
                 </TableCell>
               </TableRow>
-            )) : (
+            )}) : (
               <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center">
                   No results found.
