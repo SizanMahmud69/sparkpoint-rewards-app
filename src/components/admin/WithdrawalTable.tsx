@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -42,17 +43,32 @@ export function WithdrawalTable({
 
   const userMap = React.useMemo(() => new Map(users.map(user => [user.id, user])), [users]);
 
-  
-  const getStatusBadgeVariant = (status: Withdrawal['status']): "default" | "secondary" | "destructive" | "outline" => {
+  const getStatusBadge = (status: Withdrawal['status']) => {
     switch (status) {
       case 'Completed':
-        return 'default';
+        return (
+          <Badge variant="outline" className="capitalize border-transparent bg-green-500/20 text-green-700 dark:text-green-400">
+            {status}
+          </Badge>
+        );
       case 'Pending':
-        return 'secondary';
+        return (
+          <Badge variant="outline" className="capitalize border-transparent bg-yellow-400/20 text-yellow-600 dark:text-yellow-400">
+            {status}
+          </Badge>
+        );
       case 'Rejected':
-        return 'destructive';
+        return (
+          <Badge variant="outline" className="capitalize border-transparent bg-red-500/20 text-red-600 dark:text-red-400">
+            {status}
+          </Badge>
+        );
       default:
-        return 'outline';
+        return (
+          <Badge variant="outline" className="capitalize">
+            {status}
+          </Badge>
+        );
     }
   };
 
@@ -143,7 +159,7 @@ export function WithdrawalTable({
                     <div className="text-xs text-muted-foreground">${w.amountUSD.toFixed(2)}</div>
                 </TableCell>
                 <TableCell className="text-center">
-                    <Badge variant={getStatusBadgeVariant(w.status)} className="capitalize">{w.status}</Badge>
+                    {getStatusBadge(w.status)}
                 </TableCell>
                 {!isUserView && (
                     <TableCell className="text-right">
