@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -39,19 +39,26 @@ export function WithdrawalForm({
   onSubmitRequest,
   currentBalance
 }: WithdrawalFormProps) {
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | undefined>(paymentMethods[0]);
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | undefined>();
   const [isLoading, setIsLoading] = useState(false);
 
   const withdrawalSchema = createWithdrawalSchema(minWithdrawalPoints, currentBalance);
   
   const form = useForm<WithdrawalFormValues>({
     resolver: zodResolver(withdrawalSchema),
-    defaultValues: {
-      points: minWithdrawalPoints,
-      method: paymentMethods[0]?.value,
-      details: '',
-    }
   });
+
+  useEffect(() => {
+    if (paymentMethods.length > 0 && !form.getValues('method')) {
+      const defaultMethod = paymentMethods[0];
+      setSelectedMethod(defaultMethod);
+      form.reset({
+        points: minWithdrawalPoints,
+        method: defaultMethod.value,
+        details: ''
+      });
+    }
+  }, [paymentMethods, form, minWithdrawalPoints]);
 
   const handleMethodChange = (value: string) => {
     const method = paymentMethods.find(m => m.value === value);
@@ -64,12 +71,16 @@ export function WithdrawalForm({
     setIsLoading(true);
     setTimeout(() => {
         onSubmitRequest(data);
-        if (selectedMethod) {
-            form.reset({ points: minWithdrawalPoints, method: selectedMethod.value, details: '' });
+        if (paymentMethods.length > 0) {
+            const defaultMethod = paymentMethods[0];
+            setSelectedMethod(defaultMethod);
+            form.reset({ points: minWithdrawalPoints, method: defaultMethod.value, details: '' });
         }
         setIsLoading(false);
     }, 1000);
   };
+
+  const methodValue = form.watch('method');
 
   return (
     <Card className="shadow-lg flex flex-col h-full">
@@ -101,8 +112,8 @@ export function WithdrawalForm({
           
           <div className="space-y-2">
             <Label htmlFor="method">Payment Method</Label>
-            <Select onValueChange={handleMethodChange} defaultValue={selectedMethod?.value} name={form.name}>
-              <SelectTrigger id="method">
+            <Select onValueChange={handleMethodChange} value={methodValue} name={form.name}>
+              <SelectTrigger id="method" disabled={paymentMethods.length === 0}>
                 <SelectValue placeholder="Select a method" />
               </SelectTrigger>
               <SelectContent>
