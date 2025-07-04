@@ -45,7 +45,7 @@ export function AdminSidebar() {
       <SidebarContent>
         <SidebarMenu>
           {navItems.map((item) => (
-            <SidebarMenuItem key={item.label}>
+            <SidebarMenuItem key={item.href}>
               <SidebarMenuButton 
                 isActive={pathname === item.href}
                 tooltip={{children: item.label}}
