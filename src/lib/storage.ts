@@ -1,7 +1,8 @@
+
 'use client';
 
-import type { User, Withdrawal, Task, PaymentMethod, PointTransaction } from './types';
-import { mockUsers, mockWithdrawals, mockTasks, mockPaymentMethods, mockPointHistory } from './data';
+import type { User, Withdrawal, Task, PaymentMethod, PointTransaction, Notification } from './types';
+import { mockUsers, mockWithdrawals, mockTasks, mockPaymentMethods, mockPointHistory, mockNotifications } from './data';
 
 const USERS_KEY = 'sparkpoint_users_v2';
 const WITHDRAWALS_KEY = 'sparkpoint_withdrawals_v2';
@@ -9,6 +10,7 @@ const TASKS_KEY = 'sparkpoint_tasks_v2';
 const PAYMENT_METHODS_KEY = 'sparkpoint_payment_methods_v2';
 const POINT_HISTORY_KEY = 'sparkpoint_point_history_v2';
 const MIN_WITHDRAWAL_KEY = 'sparkpoint_min_withdrawal_v1';
+const NOTIFICATIONS_KEY = 'sparkpoint_notifications_v1';
 
 
 const getLocalStorage = () => {
@@ -92,4 +94,29 @@ export const saveMinWithdrawal = (amount: number) => {
     if (storage) {
         storage.setItem(MIN_WITHDRAWAL_KEY, JSON.stringify(amount));
     }
+};
+
+// Notification Storage Functions
+const getAllNotifications = (): Notification[] => getFromStorage<Notification>(NOTIFICATIONS_KEY, mockNotifications);
+const saveAllNotifications = (notifications: Notification[]) => saveToStorage<Notification>(NOTIFICATIONS_KEY, notifications);
+
+export const getNotificationsForUser = (userId: number): Notification[] => {
+    return getAllNotifications().filter(n => n.userId === userId).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+};
+
+export const addNotification = (notification: Omit<Notification, 'id'>) => {
+    const allNotifications = getAllNotifications();
+    const newNotification: Notification = {
+        ...notification,
+        id: allNotifications.length > 0 ? Math.max(...allNotifications.map(n => n.id)) + 1 : 1,
+    };
+    saveAllNotifications([newNotification, ...allNotifications]);
+};
+
+export const markNotificationsAsRead = (userId: number) => {
+    const allNotifications = getAllNotifications();
+    const updatedNotifications = allNotifications.map(n => 
+        n.userId === userId ? { ...n, read: true } : n
+    );
+    saveAllNotifications(updatedNotifications);
 };

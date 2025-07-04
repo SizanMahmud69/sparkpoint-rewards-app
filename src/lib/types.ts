@@ -48,3 +48,13 @@ export type PaymentMethod = {
   placeholder: string;
   enabled: boolean;
 };
+
+export type Notification = {
+  id: number;
+  userId: number;
+  title: string;
+  description: string;
+  type: 'success' | 'error' | 'info';
+  read: boolean;
+  date: string;
+};

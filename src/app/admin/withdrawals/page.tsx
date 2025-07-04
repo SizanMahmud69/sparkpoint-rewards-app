@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { WithdrawalTable } from '@/components/admin/WithdrawalTable';
 import { WithdrawalFormManagement } from '@/components/admin/WithdrawalFormManagement';
 import { WithdrawalSettings } from '@/components/admin/WithdrawalSettings';
-import { getWithdrawals, saveWithdrawals, getUsers, saveUsers, getPaymentMethods, addPointTransaction } from '@/lib/storage';
+import { getWithdrawals, saveWithdrawals, getUsers, saveUsers, getPaymentMethods, addPointTransaction, addNotification } from '@/lib/storage';
 import type { Withdrawal, User, PaymentMethod } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -34,6 +34,8 @@ export default function AdminWithdrawalsPage() {
       w.id === id ? { ...w, status: newStatus } : w
     );
     saveWithdrawals(updatedWithdrawals);
+    
+    const notificationDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 
     if (newStatus === 'Rejected') {
       const allUsers = getUsers();
@@ -53,7 +55,16 @@ export default function AdminWithdrawalsPage() {
           userId: withdrawal.userId,
           task: 'Refund: Withdrawal Rejected',
           points: withdrawal.amountPoints,
-          date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+          date: notificationDate,
+      });
+      
+      addNotification({
+          userId: withdrawal.userId,
+          title: 'Withdrawal Request Rejected',
+          description: `Your request for ${withdrawal.amountPoints.toLocaleString()} points was rejected. The points have been refunded to your account.`,
+          type: 'error',
+          read: false,
+          date: notificationDate,
       });
 
     } else if (newStatus === 'Completed') {
@@ -61,6 +72,15 @@ export default function AdminWithdrawalsPage() {
           title: "Withdrawal Approved",
           description: `Request for ${withdrawal.amountPoints.toLocaleString()} points from ${withdrawal.userName} has been marked as completed.`
         });
+
+       addNotification({
+          userId: withdrawal.userId,
+          title: 'Withdrawal Approved!',
+          description: `Your withdrawal of ${withdrawal.amountPoints.toLocaleString()} points ($${withdrawal.amountUSD.toFixed(2)}) has been processed successfully.`,
+          type: 'success',
+          read: false,
+          date: notificationDate,
+      });
     }
     refreshData();
   };
