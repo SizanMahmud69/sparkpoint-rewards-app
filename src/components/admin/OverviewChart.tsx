@@ -3,26 +3,40 @@
 import * as React from 'react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { getUsers } from '@/lib/storage';
 
 export function OverviewChart() {
   const [data, setData] = React.useState<any[]>([]);
 
   React.useEffect(() => {
-    const generatedData = [
-      { name: "Jan", total: Math.floor(Math.random() * 200) + 50 },
-      { name: "Feb", total: Math.floor(Math.random() * 200) + 100 },
-      { name: "Mar", total: Math.floor(Math.random() * 200) + 150 },
-      { name: "Apr", total: Math.floor(Math.random() * 200) + 200 },
-      { name: "May", total: Math.floor(Math.random() * 200) + 250 },
-      { name: "Jun", total: Math.floor(Math.random() * 200) + 300 },
-      { name: "Jul", total: Math.floor(Math.random() * 200) + 350 },
-      { name: "Aug", total: Math.floor(Math.random() * 200) + 400 },
-      { name: "Sep", total: Math.floor(Math.random() * 200) + 380 },
-      { name: "Oct", total: Math.floor(Math.random() * 200) + 420 },
-      { name: "Nov", total: Math.floor(Math.random() * 200) + 450 },
-      { name: "Dec", total: Math.floor(Math.random() * 200) + 500 },
-    ];
-    setData(generatedData);
+    const allUsers = getUsers();
+    const monthlyData: { [key: string]: number } = {
+        "Jan": 0, "Feb": 0, "Mar": 0, "Apr": 0, "May": 0, "Jun": 0,
+        "Jul": 0, "Aug": 0, "Sep": 0, "Oct": 0, "Nov": 0, "Dec": 0
+    };
+    
+    allUsers.forEach(user => {
+      try {
+        const date = new Date(user.registrationDate);
+        if (!isNaN(date.getTime())) {
+          const monthIndex = date.getMonth();
+          const monthName = Object.keys(monthlyData)[monthIndex];
+          if (monthName) {
+              monthlyData[monthName]++;
+          }
+        }
+      } catch(e) {
+        console.error("Invalid date format for user:", user);
+      }
+    });
+
+    const chartData = Object.entries(monthlyData).map(([name, total]) => ({
+        name,
+        total,
+    }));
+    
+    setData(chartData);
+
   }, []);
 
 

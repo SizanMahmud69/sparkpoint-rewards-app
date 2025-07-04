@@ -3,26 +3,41 @@
 import * as React from "react";
 import { Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { getAllPointHistory } from "@/lib/storage";
 
 export function PointsEarnedChart() {
   const [data, setData] = React.useState<any[]>([]);
 
   React.useEffect(() => {
-    const generatedData = [
-      { month: "Jan", points: Math.floor(Math.random() * 50000) + 10000 },
-      { month: "Feb", points: Math.floor(Math.random() * 50000) + 20000 },
-      { month: "Mar", points: Math.floor(Math.random() * 50000) + 40000 },
-      { month: "Apr", points: Math.floor(Math.random() * 50000) + 60000 },
-      { month: "May", points: Math.floor(Math.random() * 50000) + 80000 },
-      { month: "Jun", points: Math.floor(Math.random() * 50000) + 120000 },
-      { month: "Jul", points: Math.floor(Math.random() * 50000) + 150000 },
-      { month: "Aug", points: Math.floor(Math.random() * 50000) + 180000 },
-      { month: "Sep", points: Math.floor(Math.random() * 50000) + 220000 },
-      { month: "Oct", points: Math.floor(Math.random() * 50000) + 250000 },
-      { month: "Nov", points: Math.floor(Math.random() * 50000) + 300000 },
-      { month: "Dec", points: Math.floor(Math.random() * 50000) + 350000 },
-    ];
-    setData(generatedData);
+    const allHistory = getAllPointHistory();
+    const monthlyData: { [key: string]: number } = {
+        "Jan": 0, "Feb": 0, "Mar": 0, "Apr": 0, "May": 0, "Jun": 0,
+        "Jul": 0, "Aug": 0, "Sep": 0, "Oct": 0, "Nov": 0, "Dec": 0
+    };
+
+    allHistory.forEach(transaction => {
+      if (transaction.points > 0) {
+        try {
+          const date = new Date(transaction.date);
+           if (!isNaN(date.getTime())) {
+            const monthIndex = date.getMonth();
+            const monthName = Object.keys(monthlyData)[monthIndex];
+            if (monthName) {
+                monthlyData[monthName] += transaction.points;
+            }
+          }
+        } catch(e) {
+          console.error("Invalid date format for transaction:", transaction);
+        }
+      }
+    });
+
+    const chartData = Object.entries(monthlyData).map(([month, points]) => ({
+        month,
+        points,
+    }));
+    
+    setData(chartData);
   }, []);
 
   return (
