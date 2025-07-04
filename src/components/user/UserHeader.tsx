@@ -1,10 +1,16 @@
+
+"use client";
+
 import Link from 'next/link';
 import { Logo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
 import { UserNav } from '@/components/user/UserNav';
 import { Coins } from 'lucide-react';
+import { useUserPoints } from '@/context/UserPointsContext';
 
 export function UserHeader() {
+  const { points } = useUserPoints();
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
       <div className="container flex h-16 items-center justify-between px-4">
@@ -32,7 +38,7 @@ export function UserHeader() {
         <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-sm font-semibold text-primary">
                 <Coins className="h-5 w-5" />
-                <span>1,250 Points</span>
+                <span>{points.toLocaleString()} Points</span>
             </div>
           <UserNav />
         </div>

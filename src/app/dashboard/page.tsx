@@ -1,10 +1,15 @@
+
+"use client";
+
 import { TaskCard } from '@/components/user/TaskCard';
 import { Coins, Trophy } from 'lucide-react';
 import { mockTasks } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SpinWheelTask } from '@/components/user/SpinWheelTask';
+import { useUserPoints } from '@/context/UserPointsContext';
 
 export default function DashboardPage() {
+  const { points } = useUserPoints();
   const enabledTasks = mockTasks.filter(task => task.enabled);
   const spinWheelTask = enabledTasks.find(task => task.title === 'Spin the Wheel');
   const otherTasks = enabledTasks.filter(task => task.title !== 'Spin the Wheel');
@@ -25,8 +30,8 @@ export default function DashboardPage() {
                   <Coins className="h-5 w-5 text-muted-foreground"/>
               </CardHeader>
               <CardContent>
-                  <div className="text-2xl font-bold font-headline">1,250 Points</div>
-                  <p className="text-xs text-muted-foreground">Equivalent to $1.25</p>
+                  <div className="text-2xl font-bold font-headline">{points.toLocaleString()} Points</div>
+                  <p className="text-xs text-muted-foreground">Equivalent to ${(points / 1000).toFixed(2)}</p>
               </CardContent>
           </Card>
           <Card>

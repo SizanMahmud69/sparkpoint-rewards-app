@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -8,6 +9,7 @@ import type { LucideProps } from 'lucide-react';
 import { Calendar, HeartCrack, VenetianMask, RotateCw, Timer, Gift } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Task } from '@/lib/types';
+import { useUserPoints } from '@/context/UserPointsContext';
 
 const iconMap: { [key: string]: React.ComponentType<LucideProps> } = {
   Calendar,
@@ -21,6 +23,7 @@ type TaskCardProps = Task;
 
 export function TaskCard({ id, title, description, points, icon, color, actionText }: TaskCardProps) {
   const { toast } = useToast();
+  const { updatePoints } = useUserPoints();
   const [isDisabled, setIsDisabled] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const taskKey = `task_cooldown_${id}`;
@@ -64,6 +67,7 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
     }
     const earnedPoints = possiblePoints[Math.floor(Math.random() * possiblePoints.length)] || possiblePoints[0];
 
+    updatePoints(earnedPoints);
     toast({
       title: 'Task Complete!',
       description: `You earned ${earnedPoints} points from ${title}.`,

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -5,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Dices, Timer } from 'lucide-react';
+import { useUserPoints } from '@/context/UserPointsContext';
 
 const segments = [
     { color: '#a0c4ff', label: '10' },
@@ -23,6 +25,7 @@ const taskKey = 'spin_wheel_cooldown';
 
 export function SpinWheelTask() {
     const { toast } = useToast();
+    const { updatePoints } = useUserPoints();
     const [isSpinning, setIsSpinning] = useState(false);
     const [rotation, setRotation] = useState(0);
     const [isCooldown, setIsCooldown] = useState(false);
@@ -68,6 +71,8 @@ export function SpinWheelTask() {
         const prize = segments[segmentIndex];
 
         setTimeout(() => {
+            const earnedPoints = parseInt(prize.label, 10);
+            updatePoints(earnedPoints);
             toast({
                 title: 'Congratulations!',
                 description: `You won ${prize.label} points!`,
