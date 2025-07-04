@@ -1,12 +1,12 @@
 import { TaskCard } from '@/components/user/TaskCard';
-import { Calendar, Gift, HeartCrack, VenetianMask, RotateCw } from 'lucide-react';
+import { Gift } from 'lucide-react';
 
 const tasks = [
   {
     title: 'Daily Login Reward',
     description: 'Claim your daily points for logging in.',
     points: 'Up to 70',
-    icon: Calendar,
+    icon: 'Calendar',
     color: 'bg-blue-500',
     actionText: 'Claim Reward',
   },
@@ -14,7 +14,7 @@ const tasks = [
     title: 'Scratch & Win',
     description: 'Scratch a card for a surprise reward.',
     points: '10/20/30',
-    icon: VenetianMask,
+    icon: 'VenetianMask',
     color: 'bg-green-500',
     actionText: 'Scratch Now',
   },
@@ -22,7 +22,7 @@ const tasks = [
     title: 'Crack Your Heart',
     description: 'Click the heart to release points.',
     points: '5/10/15',
-    icon: HeartCrack,
+    icon: 'HeartCrack',
     color: 'bg-red-500',
     actionText: 'Crack It',
   },
@@ -30,7 +30,7 @@ const tasks = [
     title: 'Spin & Wheel',
     description: 'Spin the wheel for a chance to win big.',
     points: '5/8/10/15/20',
-    icon: RotateCw,
+    icon: 'RotateCw',
     color: 'bg-yellow-500',
     actionText: 'Spin Wheel',
   },

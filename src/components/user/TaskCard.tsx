@@ -4,24 +4,33 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import type { LucideIcon } from 'lucide-react';
+import type { LucideProps } from 'lucide-react';
+import { Calendar, HeartCrack, VenetianMask, RotateCw, Timer } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Timer } from 'lucide-react';
+
+const iconMap: { [key: string]: React.ComponentType<LucideProps> } = {
+  Calendar,
+  HeartCrack,
+  VenetianMask,
+  RotateCw,
+};
 
 interface TaskCardProps {
   title: string;
   description: string;
   points: string;
-  icon: LucideIcon;
+  icon: keyof typeof iconMap;
   color: string;
   actionText: string;
 }
 
-export function TaskCard({ title, description, points, icon: Icon, color, actionText }: TaskCardProps) {
+export function TaskCard({ title, description, points, icon, color, actionText }: TaskCardProps) {
   const { toast } = useToast();
   const [isDisabled, setIsDisabled] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const taskKey = `task_cooldown_${title.replace(/\s+/g, '_')}`;
+
+  const Icon = iconMap[icon];
 
   useEffect(() => {
     const cooldownEnd = localStorage.getItem(taskKey);
@@ -83,7 +92,7 @@ export function TaskCard({ title, description, points, icon: Icon, color, action
       <CardHeader>
         <div className="flex items-center gap-4">
           <div className={cn('p-3 rounded-full', color)}>
-            <Icon className="h-6 w-6 text-white" />
+            {Icon && <Icon className="h-6 w-6 text-white" />}
           </div>
           <div>
             <CardTitle className="font-headline text-lg">{title}</CardTitle>
