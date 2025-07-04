@@ -106,7 +106,7 @@ export function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
                 <TableHead>Description</TableHead>
                 <TableHead className="w-[180px]">Points</TableHead>
                 <TableHead className="w-[120px]">Daily Limit</TableHead>
-                <TableHead className="text-center w-[150px]">Status</TableHead>
+                <TableHead className="text-center w-[100px]">Status</TableHead>
                 <TableHead className="text-right w-[80px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -149,10 +149,7 @@ export function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
                     />
                   </TableCell>
                   <TableCell className="text-center">
-                    <div className="flex items-center justify-center space-x-3">
-                      <Badge variant={task.enabled ? 'default' : 'secondary'} className="capitalize w-[70px] justify-center">
-                        {task.enabled ? 'Enabled' : 'Disabled'}
-                      </Badge>
+                    <div className="flex items-center justify-center">
                       <Switch
                         id={`task-switch-${task.id}`}
                         checked={task.enabled}
