@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -145,9 +144,6 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
                     <div className="flex-grow">
                         <h3 className="font-headline text-lg">{title}</h3>
                         <p className="text-sm text-white/70">{description}</p>
-                    </div>
-                    <div className="bg-white/20 rounded-full px-4 py-1 text-sm font-bold">
-                      {points} Points
                     </div>
                 </>
             )}

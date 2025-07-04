@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -168,10 +167,6 @@ export function SpinWheelTask({ task }: { task: Task }) {
                     <p className="text-sm text-white/70">{task.description}</p>
                 </div>
                 
-                <div className="bg-white/20 rounded-full px-4 py-1 text-sm font-bold">
-                    {task.points} Points
-                </div>
-
                 <div className="w-full pt-1">
                     <Button onClick={handleSpin} disabled={isSpinning || isCooldown} className="w-full bg-white text-primary font-bold hover:bg-white/90">
                         {isCooldown ? (
