@@ -29,12 +29,15 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
   const [isDisabled, setIsDisabled] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [earnedPoints, setEarnedPoints] = useState<number | null>(null);
-  const taskKey = `task_cooldown_${id}`;
-  const pointsKey = `task_last_points_${id}`;
+
+  const taskKey = user ? `task_cooldown_${user.id}_${id}` : null;
+  const pointsKey = user ? `task_last_points_${user.id}_${id}` : null;
 
   const Icon = iconMap[icon] || Gift;
 
   useEffect(() => {
+    if (!taskKey || !pointsKey) return;
+
     const cooldownEnd = localStorage.getItem(taskKey);
     const lastPoints = localStorage.getItem(pointsKey);
 
@@ -49,28 +52,37 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
       } else {
         localStorage.removeItem(taskKey);
         localStorage.removeItem(pointsKey);
+        setIsDisabled(false);
+        setEarnedPoints(null);
       }
     }
   }, [taskKey, pointsKey]);
 
   useEffect(() => {
-    if (timeLeft <= 0) {
+    if (!taskKey || !pointsKey || timeLeft <= 0) {
       if (isDisabled) {
         localStorage.removeItem(taskKey);
         localStorage.removeItem(pointsKey);
         setEarnedPoints(null);
+        setIsDisabled(false);
       }
-      setIsDisabled(false);
       return;
     }
+
     const intervalId = setInterval(() => {
-      setTimeLeft(prevTime => prevTime - 1000);
+      setTimeLeft(prevTime => {
+          if (prevTime <= 1000) {
+              return 0;
+          }
+          return prevTime - 1000;
+      });
     }, 1000);
+
     return () => clearInterval(intervalId);
   }, [timeLeft, isDisabled, taskKey, pointsKey]);
 
   const handleTaskComplete = () => {
-    if (!user) return;
+    if (!user || !taskKey || !pointsKey) return;
     
     let possiblePoints: number[];
     if (points.includes('/')) {

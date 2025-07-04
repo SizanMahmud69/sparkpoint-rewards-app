@@ -24,8 +24,6 @@ const segments = [
 
 const conicGradient = `conic-gradient(from -22.5deg, ${segments.map((s, i) => `${s.color} ${i * 45}deg ${(i + 1) * 45}deg`).join(', ')})`;
 
-const taskKey = 'spin_wheel_cooldown';
-
 export function SpinWheelTask({ task }: { task: Task }) {
     const { user, updatePoints } = useUserPoints();
     const { toast } = useToast();
@@ -33,8 +31,11 @@ export function SpinWheelTask({ task }: { task: Task }) {
     const [rotation, setRotation] = useState(0);
     const [isCooldown, setIsCooldown] = useState(false);
     const [timeLeft, setTimeLeft] = useState(0);
+    
+    const taskKey = user ? `spin_wheel_cooldown_${user.id}` : null;
 
     useEffect(() => {
+        if (!taskKey) return;
         const cooldownEnd = localStorage.getItem(taskKey);
         if (cooldownEnd) {
             const remaining = new Date(cooldownEnd).getTime() - new Date().getTime();
@@ -43,25 +44,35 @@ export function SpinWheelTask({ task }: { task: Task }) {
                 setTimeLeft(remaining);
             } else {
                 localStorage.removeItem(taskKey);
+                setIsCooldown(false);
             }
         }
-    }, []);
+    }, [taskKey]);
 
     useEffect(() => {
-        if (timeLeft <= 0) {
-            if (isCooldown) localStorage.removeItem(taskKey);
-            setIsCooldown(false);
+        if (!taskKey || timeLeft <= 0) {
+            if (isCooldown) {
+                localStorage.removeItem(taskKey);
+                setIsCooldown(false);
+            }
             return;
         }
+
         const intervalId = setInterval(() => {
-            setTimeLeft(prevTime => prevTime - 1000);
+            setTimeLeft(prevTime => {
+                if (prevTime <= 1000) {
+                    return 0;
+                }
+                return prevTime - 1000;
+            });
         }, 1000);
+        
         return () => clearInterval(intervalId);
-    }, [timeLeft, isCooldown]);
+    }, [timeLeft, isCooldown, taskKey]);
 
 
     const handleSpin = () => {
-        if (isSpinning || isCooldown || !user) return;
+        if (isSpinning || isCooldown || !user || !taskKey) return;
         setIsSpinning(true);
         const randomSpins = Math.floor(Math.random() * 5) + 5;
         const stopAngle = Math.floor(Math.random() * 360);
