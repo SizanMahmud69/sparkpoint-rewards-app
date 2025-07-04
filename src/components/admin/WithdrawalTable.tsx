@@ -11,18 +11,20 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import type { Withdrawal } from '@/lib/types';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { cn } from '@/lib/utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import { Button } from '../ui/button';
+import { MoreHorizontal } from 'lucide-react';
 
 export function WithdrawalTable({ withdrawals: initialWithdrawals }: { withdrawals: Withdrawal[] }) {
   const [withdrawals, setWithdrawals] = React.useState(initialWithdrawals);
 
   const handleStatusChange = (id: number, newStatus: Withdrawal['status']) => {
+    // In a real app, this would be an API call.
     setWithdrawals(withdrawals.map(w => w.id === id ? { ...w, status: newStatus } : w));
   };
   
-  const getStatusBadgeVariant = (status: Withdrawal['status']) => {
+  const getStatusBadgeVariant = (status: Withdrawal['status']): "default" | "secondary" | "destructive" | "outline" => {
     switch (status) {
       case 'Completed':
         return 'default';
@@ -50,6 +52,7 @@ export function WithdrawalTable({ withdrawals: initialWithdrawals }: { withdrawa
               <TableHead>Method</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -60,21 +63,26 @@ export function WithdrawalTable({ withdrawals: initialWithdrawals }: { withdrawa
                 <TableCell>{w.method}</TableCell>
                 <TableCell>{w.date}</TableCell>
                 <TableCell>
-                  <Select onValueChange={(value) => handleStatusChange(w.id, value as Withdrawal['status'])} defaultValue={w.status}>
-                    <SelectTrigger className={cn(
-                      "w-[120px] text-xs font-semibold",
-                      w.status === 'Completed' && 'bg-green-100 border-green-300 text-green-800',
-                      w.status === 'Pending' && 'bg-yellow-100 border-yellow-300 text-yellow-800',
-                      w.status === 'Rejected' && 'bg-red-100 border-red-300 text-red-800'
-                    )}>
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Pending">Pending</SelectItem>
-                      <SelectItem value="Completed">Completed</SelectItem>
-                       <SelectItem value="Rejected">Rejected</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    <Badge variant={getStatusBadgeVariant(w.status)}>{w.status}</Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                    {w.status === 'Pending' && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleStatusChange(w.id, 'Completed')}>
+                                    Approve
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleStatusChange(w.id, 'Rejected')}>
+                                    Reject
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
                 </TableCell>
               </TableRow>
             ))}
