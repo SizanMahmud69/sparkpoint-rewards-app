@@ -2,6 +2,7 @@
 "use client";
 
 import React from 'react';
+import Link from 'next/link';
 import {
   Table,
   TableBody,
@@ -174,7 +175,9 @@ export function UserTable({ users, onUsersUpdate }: UserTableProps) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>View Details</DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/admin/users/${user.id}`}>View Details</Link>
+                        </DropdownMenuItem>
                          {user.status === 'Active' ? (
                           <DropdownMenuItem onClick={() => handleStatusChange(user.id, 'Suspended')}>
                             Suspend User

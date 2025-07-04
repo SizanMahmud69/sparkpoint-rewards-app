@@ -1,0 +1,159 @@
+
+"use client";
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, Mail, Calendar, Coins } from 'lucide-react';
+import { PointsHistoryTable } from '@/components/user/PointsHistoryTable';
+import { WithdrawalTable } from '@/components/admin/WithdrawalTable';
+import { getUsers, getPointHistoryForUser, getWithdrawals } from '@/lib/storage';
+import type { User, PointTransaction, Withdrawal } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const getStatusBadgeVariant = (status: User['status']): "default" | "destructive" => {
+  switch (status) {
+    case 'Active':
+      return 'default';
+    case 'Suspended':
+      return 'destructive';
+  }
+};
+
+
+export default function UserDetailsPage({ params }: { params: { id: string } }) {
+    const router = useRouter();
+    const [user, setUser] = useState<User | null>(null);
+    const [pointHistory, setPointHistory] = useState<PointTransaction[]>([]);
+    const [withdrawalHistory, setWithdrawalHistory] = useState<Withdrawal[]>([]);
+    const [loading, setLoading] = useState(true);
+    
+    useEffect(() => {
+        const userId = parseInt(params.id, 10);
+        if (isNaN(userId)) {
+            router.push('/admin/users'); // Redirect if ID is not a number
+            return;
+        }
+
+        const allUsers = getUsers();
+        const foundUser = allUsers.find(u => u.id === userId);
+        
+        if (foundUser) {
+            setUser(foundUser);
+            setPointHistory(getPointHistoryForUser(userId));
+            const allWithdrawals = getWithdrawals();
+            setWithdrawalHistory(allWithdrawals.filter(w => w.userId === userId));
+        } else {
+            // Handle user not found, maybe redirect or show an error
+            router.push('/admin/users');
+        }
+        setLoading(false);
+    }, [params.id, router]);
+
+    if (loading) {
+        return (
+            <div className="space-y-8">
+                <Skeleton className="h-8 w-48" />
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-1 space-y-8">
+                        <Card><CardHeader><Skeleton className="h-24 w-full" /></CardHeader></Card>
+                        <Card><CardHeader><Skeleton className="h-48 w-full" /></CardHeader></Card>
+                    </div>
+                     <div className="lg:col-span-2 space-y-8">
+                        <Card><CardHeader><Skeleton className="h-64 w-full" /></CardHeader></Card>
+                        <Card><CardHeader><Skeleton className="h-64 w-full" /></CardHeader></Card>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+    if (!user) {
+        return <div>User not found.</div>;
+    }
+
+    return (
+        <div className="space-y-8">
+            <div className="flex items-center gap-4">
+                <Button variant="outline" size="icon" onClick={() => router.back()}>
+                    <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <h1 className="text-3xl font-bold font-headline">User Details</h1>
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                {/* Left Column - User Info */}
+                <div className="lg:col-span-1 space-y-8">
+                    <Card className="shadow-lg">
+                        <CardHeader className="items-center text-center p-6">
+                             <Avatar className="h-24 w-24 mb-4 border-4 border-white shadow-md">
+                                <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="person face" />
+                                <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                            <CardTitle className="text-2xl font-headline">{user.name}</CardTitle>
+                            <CardDescription>ID: {user.id}</CardDescription>
+                            <Badge variant={getStatusBadgeVariant(user.status)} className="mt-2">{user.status}</Badge>
+                        </CardHeader>
+                    </Card>
+
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Contact Information</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex items-center gap-4">
+                                <Mail className="h-5 w-5 text-muted-foreground" />
+                                <span>{user.email}</span>
+                            </div>
+                             <div className="flex items-center gap-4">
+                                <Calendar className="h-5 w-5 text-muted-foreground" />
+                                <span>Joined on {new Date(user.registrationDate).toLocaleDateString()}</span>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Points Balance</CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex items-center gap-4">
+                            <Coins className="h-8 w-8 text-primary" />
+                            <div className="text-3xl font-bold font-headline">{user.points.toLocaleString()}</div>
+                            <span>Points</span>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Right Column - History Tables */}
+                <div className="lg:col-span-2 space-y-8">
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Points History</CardTitle>
+                            <CardDescription>A log of all points this user has earned or spent.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="max-h-[400px] overflow-y-auto pr-2">
+                                <PointsHistoryTable transactions={pointHistory} />
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Withdrawal History</CardTitle>
+                             <CardDescription>A log of all withdrawal requests from this user.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                             <div className="max-h-[400px] overflow-y-auto pr-2">
+                               <WithdrawalTable withdrawals={withdrawalHistory} users={[user]} isUserView={true} />
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        </div>
+    );
+}
