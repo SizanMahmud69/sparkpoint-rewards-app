@@ -9,6 +9,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const currentYear = new Date().getFullYear();
   return (
     <UserPointsProvider>
       <div className="flex min-h-screen flex-col">
@@ -18,6 +19,16 @@ export default function DashboardLayout({
               {children}
           </div>
         </main>
+        <footer className="w-full py-4 mt-auto bg-card border-t">
+            <div className="container mx-auto text-center text-muted-foreground">
+                <p className="text-sm">
+                    Copyright © {currentYear} SparkPoint. All Rights Reserved.
+                </p>
+                <p className="text-sm mt-1">
+                    Designed & Developed by <span className="font-semibold text-primary">Black Diamond</span>
+                </p>
+            </div>
+        </footer>
       </div>
     </UserPointsProvider>
   );
