@@ -22,6 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 const userSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters long."),
   email: z.string().email("Please enter a valid email address."),
+  password: z.string().min(8, { message: 'Password must be at least 8 characters' }),
 });
 
 type UserFormValues = z.infer<typeof userSchema>;
@@ -39,11 +40,11 @@ export function AddUserDialog({ open, onOpenChange, onAddUser }: AddUserDialogPr
     defaultValues: {
       name: '',
       email: '',
+      password: '',
     },
   });
 
   const onSubmit = (data: UserFormValues) => {
-    // In a real app, you'd also handle password and other fields.
     const newUser: Omit<User, 'id' | 'registrationDate' | 'avatar'> = {
         ...data,
         points: 0,
@@ -84,6 +85,15 @@ export function AddUserDialog({ open, onOpenChange, onAddUser }: AddUserDialogPr
              <div className="col-span-3">
                 <Input id="email" type="email" {...form.register('email')} className="w-full" />
                 {form.formState.errors.email && <p className="text-sm text-destructive mt-1">{form.formState.errors.email.message}</p>}
+            </div>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="password" className="text-right">
+              Password
+            </Label>
+             <div className="col-span-3">
+                <Input id="password" type="password" {...form.register('password')} className="w-full" />
+                {form.formState.errors.password && <p className="text-sm text-destructive mt-1">{form.formState.errors.password.message}</p>}
             </div>
           </div>
         </form>
