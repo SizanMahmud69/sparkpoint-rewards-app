@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from '@/components/ui/badge';
@@ -24,15 +24,22 @@ const getStatusBadgeVariant = (status: User['status']): "default" | "destructive
 };
 
 
-export default function UserDetailsPage({ params }: { params: { id: string } }) {
+export default function UserDetailsPage() {
     const router = useRouter();
+    const params = useParams();
     const [user, setUser] = useState<User | null>(null);
     const [pointHistory, setPointHistory] = useState<PointTransaction[]>([]);
     const [withdrawalHistory, setWithdrawalHistory] = useState<Withdrawal[]>([]);
     const [loading, setLoading] = useState(true);
     
     useEffect(() => {
-        const userId = parseInt(params.id, 10);
+        const id = params.id as string;
+        if (!id) {
+            setLoading(false);
+            return;
+        }
+
+        const userId = parseInt(id, 10);
         if (isNaN(userId)) {
             router.push('/admin/users'); // Redirect if ID is not a number
             return;
