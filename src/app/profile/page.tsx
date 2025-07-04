@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState, useRef, type ChangeEvent } from "react";
+import { useState, useRef, type ChangeEvent, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Coins, Mail, Calendar, Monitor, Camera } from 'lucide-react';
@@ -8,9 +9,15 @@ import { Button } from "@/components/ui/button";
 import { useUserPoints } from "@/context/UserPointsContext";
 
 export default function ProfilePage() {
-    const { points } = useUserPoints();
+    const { user, points } = useUserPoints();
     const [avatar, setAvatar] = useState("https://placehold.co/100x100.png");
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (user?.avatar) {
+            setAvatar(user.avatar);
+        }
+    }, [user]);
 
     const handleAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -39,8 +46,8 @@ export default function ProfilePage() {
                         <div className="bg-primary/10 p-8 flex flex-col items-center text-center">
                             <div className="relative">
                                 <Avatar className="h-24 w-24 mb-4 border-4 border-white shadow-md">
-                                    <AvatarImage src={avatar} alt="@user" data-ai-hint="person"/>
-                                    <AvatarFallback>JD</AvatarFallback>
+                                    <AvatarImage src={avatar} alt={user?.name || "User"} data-ai-hint="person"/>
+                                    <AvatarFallback>{user?.name ? user.name.charAt(0).toUpperCase() : 'U'}</AvatarFallback>
                                 </Avatar>
                                  <Button
                                     onClick={handleEditClick}
@@ -59,8 +66,8 @@ export default function ProfilePage() {
                                     accept="image/*"
                                 />
                             </div>
-                            <CardTitle className="text-2xl font-headline">John Doe</CardTitle>
-                            <CardDescription>Member since October 1, 2023</CardDescription>
+                            <CardTitle className="text-2xl font-headline">{user?.name || 'User Name'}</CardTitle>
+                            <CardDescription>Member since {user?.registrationDate ? new Date(user.registrationDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric'}) : 'N/A'}</CardDescription>
                         </div>
                     </CardHeader>
                 </Card>
@@ -73,7 +80,7 @@ export default function ProfilePage() {
                             </div>
                             <div>
                                 <p className="text-sm text-muted-foreground">Email Address</p>
-                                <p className="font-semibold">john.doe@example.com</p>
+                                <p className="font-semibold">{user?.email || 'N/A'}</p>
                             </div>
                         </CardHeader>
                     </Card>
@@ -95,7 +102,7 @@ export default function ProfilePage() {
                             </div>
                             <div>
                                 <p className="text-sm text-muted-foreground">Joined Date</p>
-                                <p className="font-semibold">October 1, 2023</p>
+                                <p className="font-semibold">{user?.registrationDate ? new Date(user.registrationDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric'}) : 'N/A'}</p>
                             </div>
                         </CardHeader>
                     </Card>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -11,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { loginUser, setLoggedInUser } from '@/lib/auth';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Invalid email address' }),
@@ -34,7 +36,7 @@ export function LoginForm() {
 
   const onSubmit = (data: LoginFormValues) => {
     setIsLoading(true);
-    // Simulate API call
+    
     setTimeout(() => {
       if (data.email === 'admin@spark.point' && data.password === '@Admin@#Spark#') {
         toast({
@@ -42,13 +44,26 @@ export function LoginForm() {
           description: 'Redirecting to admin dashboard...',
         });
         router.push('/admin/dashboard');
-      } else {
-        // Mock user login
+        setIsLoading(false);
+        return;
+      }
+
+      const user = loginUser(data.email, data.password);
+
+      if (user) {
+        setLoggedInUser(user);
         toast({
           title: 'Login Successful',
           description: 'Welcome back! Redirecting to your dashboard...',
         });
         router.push('/dashboard');
+        router.refresh();
+      } else {
+        toast({
+          variant: "destructive",
+          title: 'Login Failed',
+          description: 'Invalid email or password. Please try again.',
+        });
       }
       setIsLoading(false);
     }, 1000);

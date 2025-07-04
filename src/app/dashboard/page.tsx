@@ -9,7 +9,7 @@ import { SpinWheelTask } from '@/components/user/SpinWheelTask';
 import { useUserPoints } from '@/context/UserPointsContext';
 
 export default function DashboardPage() {
-  const { points } = useUserPoints();
+  const { user, points } = useUserPoints();
   const enabledTasks = mockTasks.filter(task => task.enabled);
   const spinWheelTask = enabledTasks.find(task => task.title === 'Spin the Wheel');
   const otherTasks = enabledTasks.filter(task => task.title !== 'Spin the Wheel');
@@ -19,7 +19,7 @@ export default function DashboardPage() {
     <div className="space-y-8">
       {/* Welcome and Stats Section */}
       <div className="p-8 rounded-2xl bg-gradient-to-tr from-primary/80 to-primary text-primary-foreground shadow-lg">
-        <h1 className="text-4xl font-bold font-headline">Welcome Back, John!</h1>
+        <h1 className="text-4xl font-bold font-headline">Welcome Back, {user?.name.split(' ')[0] || 'User'}!</h1>
         <p className="mt-2 text-lg text-primary-foreground/80">Ready to earn some more points today?</p>
       </div>
 

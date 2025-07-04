@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -11,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { registerUser, setLoggedInUser } from '@/lib/auth';
 
 const registerSchema = z.object({
   name: z.string().min(3, { message: 'Name must be at least 3 characters' }),
@@ -31,16 +33,27 @@ export function RegisterForm() {
 
   const onSubmit = (data: RegisterFormValues) => {
     setIsLoading(true);
-    // Simulate API call for registration
+    
+    const result = registerUser(data.name, data.email, data.password);
+
     setTimeout(() => {
-      console.log(data);
-      toast({
-        title: 'Registration Successful!',
-        description: 'You have been awarded 50 bonus points. Redirecting to your dashboard...',
-      });
-      router.push('/dashboard');
+      if (result.success && result.user) {
+        setLoggedInUser(result.user);
+        toast({
+          title: 'Registration Successful!',
+          description: 'You have been awarded 50 bonus points. Redirecting to your dashboard...',
+        });
+        router.push('/dashboard');
+        router.refresh();
+      } else {
+        toast({
+          variant: "destructive",
+          title: 'Registration Failed',
+          description: result.message,
+        });
+      }
       setIsLoading(false);
-    }, 1500);
+    }, 1000);
   };
 
   return (

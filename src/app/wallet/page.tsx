@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { PointsHistoryTable } from "@/components/user/PointsHistoryTable";
 import { WithdrawalForm, type WithdrawalFormValues } from "@/components/user/WithdrawalForm";
@@ -22,14 +22,17 @@ import { useUserPoints } from '@/context/UserPointsContext';
 
 export default function WalletPage() {
   const { toast } = useToast();
-  const { points, updatePoints } = useUserPoints();
-  const loggedInUserId = 1;
-  const initialUser = mockUsers.find(u => u.id === loggedInUserId)!;
+  const { user, points, updatePoints } = useUserPoints();
+
+  const [withdrawalHistory, setWithdrawalHistory] = useState<Withdrawal[]>([]);
+
+  useEffect(() => {
+    if (user) {
+      setWithdrawalHistory(mockWithdrawals.filter(w => w.userId === user.id));
+    }
+  }, [user]);
 
   const [pointHistory, setPointHistory] = useState<PointTransaction[]>(mockPointHistory);
-  const [withdrawalHistory, setWithdrawalHistory] = useState<Withdrawal[]>(
-    mockWithdrawals.filter(w => w.userId === loggedInUserId)
-  );
 
   const [isPointsHistoryDialogOpen, setIsPointsHistoryDialogOpen] = useState(false);
   const [isWithdrawalHistoryDialogOpen, setIsWithdrawalHistoryDialogOpen] = useState(false);
@@ -37,6 +40,11 @@ export default function WalletPage() {
   const minWithdrawalPoints = 1000;
 
   const handleWithdrawalRequest = (data: WithdrawalFormValues) => {
+    if (!user) {
+      toast({ variant: "destructive", title: "Error", description: "You must be logged in to make a withdrawal." });
+      return;
+    }
+
     if (data.points > points) {
       toast({
         variant: "destructive",
@@ -50,8 +58,8 @@ export default function WalletPage() {
 
     const newWithdrawal: Withdrawal = {
       id: Math.random(),
-      userId: loggedInUserId,
-      userName: initialUser.name,
+      userId: user.id,
+      userName: user.name,
       amountPoints: data.points,
       amountUSD: data.points / 1000,
       method: data.method as any,

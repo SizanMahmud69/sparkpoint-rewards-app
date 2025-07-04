@@ -1,6 +1,8 @@
+
 "use client";
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,8 +15,17 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Bell, User, Wallet, LogOut, CheckCircle } from 'lucide-react';
 import { Badge } from '../ui/badge';
+import { useUserPoints } from '@/context/UserPointsContext';
 
 export function UserNav() {
+  const { user, logout } = useUserPoints();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    logout();
+    router.push('/');
+  };
+
   return (
     <div className='flex items-center gap-2'>
         <DropdownMenu>
@@ -61,17 +72,17 @@ export function UserNav() {
         <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
             <Avatar className="h-10 w-10">
-                <AvatarImage src="https://placehold.co/100x100.png" alt="@user" data-ai-hint="person" />
-                <AvatarFallback>U</AvatarFallback>
+                <AvatarImage src={user?.avatar || "https://placehold.co/100x100.png"} alt={user?.name || "User"} data-ai-hint="person" />
+                <AvatarFallback>{user?.name ? user.name.charAt(0).toUpperCase() : 'U'}</AvatarFallback>
             </Avatar>
             </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">John Doe</p>
+                <p className="text-sm font-medium leading-none">{user?.name || 'Guest'}</p>
                 <p className="text-xs leading-none text-muted-foreground">
-                john.doe@example.com
+                {user?.email || ''}
                 </p>
             </div>
             </DropdownMenuLabel>
@@ -83,8 +94,8 @@ export function UserNav() {
                 <Link href="/wallet"><Wallet className="mr-2 h-4 w-4" />Wallet</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-                 <Link href="/"><LogOut className="mr-2 h-4 w-4" />Log out</Link>
+            <DropdownMenuItem onClick={handleLogout}>
+                 <LogOut className="mr-2 h-4 w-4" />Log out
             </DropdownMenuItem>
         </DropdownMenuContent>
         </DropdownMenu>

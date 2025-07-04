@@ -1,7 +1,9 @@
+
 export type User = {
   id: number;
   name: string;
   email: string;
+  password?: string;
   points: number;
   registrationDate: string;
   status: 'Active' | 'Suspended';
