@@ -20,9 +20,26 @@ import { MoreHorizontal, PlusCircle, Search } from 'lucide-react';
 import type { User } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
+import { Badge } from '../ui/badge';
 
-export function UserTable({ users }: { users: User[] }) {
+const getStatusBadgeVariant = (status: User['status']): "default" | "destructive" => {
+  switch (status) {
+    case 'Active':
+      return 'default';
+    case 'Suspended':
+      return 'destructive';
+  }
+};
+
+
+export function UserTable({ users: initialUsers }: { users: User[] }) {
+  const [users, setUsers] = React.useState(initialUsers);
   const [searchTerm, setSearchTerm] = React.useState('');
+
+  const handleStatusChange = (id: number, newStatus: User['status']) => {
+    // In a real app, this would be an API call.
+    setUsers(users.map(u => u.id === id ? { ...u, status: newStatus } : u));
+  };
   
   const filteredUsers = users.filter(user => 
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -60,6 +77,7 @@ export function UserTable({ users }: { users: User[] }) {
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead className="text-right">Points</TableHead>
               <TableHead>Registration Date</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -70,6 +88,9 @@ export function UserTable({ users }: { users: User[] }) {
               <TableRow key={user.id}>
                 <TableCell className="font-medium">{user.name}</TableCell>
                 <TableCell>{user.email}</TableCell>
+                <TableCell>
+                  <Badge variant={getStatusBadgeVariant(user.status)}>{user.status}</Badge>
+                </TableCell>
                 <TableCell className="text-right">{user.points.toLocaleString()}</TableCell>
                 <TableCell>{user.registrationDate}</TableCell>
                 <TableCell className="text-right">
@@ -82,7 +103,15 @@ export function UserTable({ users }: { users: User[] }) {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem>View Details</DropdownMenuItem>
-                      <DropdownMenuItem>Suspend User</DropdownMenuItem>
+                       {user.status === 'Active' ? (
+                        <DropdownMenuItem onClick={() => handleStatusChange(user.id, 'Suspended')}>
+                          Suspend User
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem onClick={() => handleStatusChange(user.id, 'Active')}>
+                          Activate User
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem className="text-destructive">Delete User</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

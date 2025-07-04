@@ -1,9 +1,11 @@
 import type { User, Withdrawal, PointTransaction, Task } from './types';
 
 export const mockUsers: User[] = [
-  { id: 1, name: 'Alice Johnson', email: 'alice@example.com', points: 1250, registrationDate: '2023-10-01' },
-  { id: 2, name: 'Bob Smith', email: 'bob@example.com', points: 780, registrationDate: '2023-10-05' },
-  { id: 3, name: 'Charlie Brown', email: 'charlie@example.com', points: 2400, registrationDate: '2023-10-12' },
+  { id: 1, name: 'Alice Johnson', email: 'alice@example.com', points: 1250, registrationDate: '2023-10-01', status: 'Active' },
+  { id: 2, name: 'Bob Smith', email: 'bob@example.com', points: 780, registrationDate: '2023-10-05', status: 'Active' },
+  { id: 3, name: 'Charlie Brown', email: 'charlie@example.com', points: 2400, registrationDate: '2023-10-12', status: 'Suspended' },
+  { id: 4, name: 'Diana Prince', email: 'diana@example.com', points: 5600, registrationDate: '2023-09-15', status: 'Active' },
+  { id: 5, name: 'Ethan Hunt', email: 'ethan@example.com', points: 300, registrationDate: '2023-11-20', status: 'Active' },
 ];
 
 export const mockWithdrawals: Withdrawal[] = [
