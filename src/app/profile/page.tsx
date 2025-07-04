@@ -10,6 +10,49 @@ import { useUserPoints } from "@/context/UserPointsContext";
 import { updateUserAvatar } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
 
+const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            if (!event.target?.result) {
+                return reject(new Error("Could not read file."));
+            }
+            const img = new Image();
+            img.src = event.target.result as string;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let { width, height } = img;
+
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height *= maxWidth / width;
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxHeight) {
+                        width *= maxHeight / height;
+                        height = maxHeight;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    return reject(new Error("Could not get canvas context."));
+                }
+                ctx.drawImage(img, 0, 0, width, height);
+
+                resolve(canvas.toDataURL('image/jpeg', 0.9));
+            };
+            img.onerror = (error) => reject(error);
+        };
+        reader.onerror = (error) => reject(error);
+    });
+};
+
 
 export default function ProfilePage() {
     const { user, points, refreshUser } = useUserPoints();
@@ -17,19 +60,37 @@ export default function ProfilePage() {
     
     const [newAvatarPreview, setNewAvatarPreview] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [isProcessingImage, setIsProcessingImage] = useState(false);
     
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const handleAvatarChange = async (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            const reader = new FileReader();
-            reader.onload = (loadEvent) => {
-                if (loadEvent.target?.result) {
-                    setNewAvatarPreview(loadEvent.target.result as string);
-                }
-            };
-            reader.readAsDataURL(file);
+
+            if (file.size > 10 * 1024 * 1024) { // 10MB limit
+                toast({
+                    variant: 'destructive',
+                    title: 'Image Too Large',
+                    description: 'Please upload an image smaller than 10MB.',
+                });
+                return;
+            }
+            
+            setIsProcessingImage(true);
+            try {
+                const resizedDataUrl = await resizeImage(file, 256, 256);
+                setNewAvatarPreview(resizedDataUrl);
+            } catch (error) {
+                toast({
+                    variant: 'destructive',
+                    title: 'Image Processing Error',
+                    description: 'Could not process the image. Please try a different file.',
+                });
+                console.error("Image processing error:", error);
+            } finally {
+                setIsProcessingImage(false);
+            }
         }
     };
 
@@ -51,8 +112,8 @@ export default function ProfilePage() {
         } catch (error) {
             toast({
                 variant: 'destructive',
-                title: 'Error',
-                description: 'Failed to update profile picture.',
+                title: 'Error updating picture',
+                description: 'Failed to save the new profile picture. The file might still be too large.',
             });
             console.error(error);
         } finally {
@@ -80,8 +141,13 @@ export default function ProfilePage() {
                                     variant="outline"
                                     size="icon"
                                     className="absolute bottom-4 right-0 rounded-full bg-white shadow-md hover:bg-muted"
+                                    disabled={isProcessingImage || isSaving}
                                 >
-                                    <Camera className="h-5 w-5 text-primary" />
+                                    {isProcessingImage ? (
+                                        <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                                    ) : (
+                                        <Camera className="h-5 w-5 text-primary" />
+                                    )}
                                     <span className="sr-only">Change profile picture</span>
                                 </Button>
                                 <input
@@ -97,11 +163,11 @@ export default function ProfilePage() {
                             
                             {newAvatarPreview && (
                                 <div className="mt-4 flex gap-2">
-                                    <Button onClick={handleSaveAvatar} disabled={isSaving}>
+                                    <Button onClick={handleSaveAvatar} disabled={isSaving || isProcessingImage}>
                                         {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                         Save Picture
                                     </Button>
-                                     <Button variant="ghost" onClick={() => setNewAvatarPreview(null)} disabled={isSaving}>
+                                     <Button variant="ghost" onClick={() => setNewAvatarPreview(null)} disabled={isSaving || isProcessingImage}>
                                         Cancel
                                     </Button>
                                 </div>
