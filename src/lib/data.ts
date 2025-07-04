@@ -21,7 +21,6 @@ export const mockPointHistory: PointTransaction[] = [
     { id: 2, task: 'Daily Login Reward', points: 20, date: '2023-11-10' },
     { id: 3, task: 'Spin & Win', points: 15, date: '2023-11-09' },
     { id: 4, task: 'Scratch & Win', points: 30, date: '2023-11-09' },
-    { id: 5, task: 'Crack Your Heart', points: 5, date: '2023-11-09' },
 ];
 
 export const mockTasks: Task[] = [
@@ -43,16 +42,6 @@ export const mockTasks: Task[] = [
     icon: 'VenetianMask',
     color: 'bg-green-500',
     actionText: 'Scratch Now',
-    enabled: true,
-  },
-  {
-    id: 3,
-    title: 'Crack Your Heart',
-    description: 'Click the heart to release points.',
-    points: '5/10/15',
-    icon: 'HeartCrack',
-    color: 'bg-pink-500',
-    actionText: 'Crack It',
     enabled: true,
   },
   {
