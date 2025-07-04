@@ -7,23 +7,62 @@ import { Coins, Trophy, Dices } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SpinWheelTask } from '@/components/user/SpinWheelTask';
 import { useUserPoints } from '@/context/UserPointsContext';
-import { getTasks } from '@/lib/storage';
-import type { Task } from '@/lib/types';
+import { getTasks, getPointHistoryForUser } from '@/lib/storage';
+import type { Task, PointTransaction } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DashboardPage() {
   const { user, points } = useUserPoints();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pointsToday, setPointsToday] = useState(0);
+  const [tasksCompletedToday, setTasksCompletedToday] = useState(0);
 
   useEffect(() => {
-    const fetchTasks = async () => {
+    const fetchData = async () => {
       setLoading(true);
-      setTasks(await getTasks());
+      
+      const [fetchedTasks, pointHistory] = await Promise.all([
+        getTasks(),
+        user ? getPointHistoryForUser(user.id) : Promise.resolve([])
+      ]);
+      
+      setTasks(fetchedTasks);
+
+      if (user && pointHistory.length > 0) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        let totalPointsToday = 0;
+        let completedTasksToday = 0;
+        const nonTaskRewards = ['Registration Bonus', 'Refund: Withdrawal Rejected'];
+
+        pointHistory.forEach(transaction => {
+          const transactionDate = new Date(transaction.date);
+          if (transactionDate >= today && transaction.points > 0) {
+            totalPointsToday += transaction.points;
+            if (!nonTaskRewards.includes(transaction.task)) {
+              completedTasksToday++;
+            }
+          }
+        });
+        setPointsToday(totalPointsToday);
+        setTasksCompletedToday(completedTasksToday);
+      }
+      
       setLoading(false);
+    };
+
+    if (user) {
+      fetchData();
+    } else {
+      // If user is not yet available, just fetch tasks
+      getTasks().then(fetchedTasks => {
+        setTasks(fetchedTasks);
+        setLoading(false);
+      });
     }
-    fetchTasks();
-  }, []);
+  }, [user]);
   
   const enabledTasks = tasks.filter(task => task.enabled);
   const spinWheelTask = enabledTasks.find(task => task.icon === 'Dices');
@@ -55,8 +94,19 @@ export default function DashboardPage() {
                   <Trophy className="h-5 w-5 text-muted-foreground"/>
               </CardHeader>
               <CardContent>
-                  <div className="text-2xl font-bold font-headline">+75 Points</div>
-                  <p className="text-xs text-muted-foreground">From 3 completed tasks</p>
+                 {loading && !user ? (
+                    <>
+                      <Skeleton className="h-8 w-24 mb-2" />
+                      <Skeleton className="h-4 w-32" />
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-2xl font-bold font-headline">+{pointsToday.toLocaleString()} Points</div>
+                      <p className="text-xs text-muted-foreground">
+                        From {tasksCompletedToday} completed task{tasksCompletedToday === 1 ? '' : 's'}
+                      </p>
+                    </>
+                )}
               </CardContent>
           </Card>
       </div>
