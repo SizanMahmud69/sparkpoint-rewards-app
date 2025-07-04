@@ -25,7 +25,7 @@ import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { AddUserDialog } from './AddUserDialog';
-import { getUsers, saveUsers, deleteUserAndData } from '@/lib/storage';
+import { updateUserStatus, deleteUserAndData, addUser } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -37,6 +37,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Skeleton } from '../ui/skeleton';
 
 const getStatusBadgeVariant = (status: User['status']): "default" | "destructive" => {
   switch (status) {
@@ -50,25 +51,21 @@ const getStatusBadgeVariant = (status: User['status']): "default" | "destructive
 interface UserTableProps {
   users: User[];
   onUsersUpdate: () => void;
+  loading: boolean;
 }
 
-export function UserTable({ users, onUsersUpdate }: UserTableProps) {
+export function UserTable({ users, onUsersUpdate, loading }: UserTableProps) {
   const [searchTerm, setSearchTerm] = React.useState('');
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = React.useState(false);
   const [isAlertOpen, setIsAlertOpen] = React.useState(false);
   const [userToDelete, setUserToDelete] = React.useState<User | null>(null);
   const { toast } = useToast();
 
-  const handleStatusChange = (id: number, newStatus: User['status']) => {
-    const currentUsers = getUsers();
-    const user = currentUsers.find(u => u.id === id);
-    if (!user) return;
-
-    const updatedUsers = currentUsers.map(u => u.id === id ? { ...u, status: newStatus } : u);
-    saveUsers(updatedUsers);
+  const handleStatusChange = async (id: string, name: string, newStatus: User['status']) => {
+    await updateUserStatus(id, newStatus);
     toast({
       title: `User ${newStatus}`,
-      description: `User "${user.name}" has been ${newStatus.toLowerCase()}.`
+      description: `User "${name}" has been ${newStatus.toLowerCase()}.`
     });
     onUsersUpdate();
   };
@@ -78,10 +75,10 @@ export function UserTable({ users, onUsersUpdate }: UserTableProps) {
     setIsAlertOpen(true);
   };
 
-  const handleDeleteUser = () => {
+  const handleDeleteUser = async () => {
     if (!userToDelete) return;
     
-    deleteUserAndData(userToDelete.id);
+    await deleteUserAndData(userToDelete.id);
     
     toast({
         title: "User Deleted",
@@ -93,15 +90,13 @@ export function UserTable({ users, onUsersUpdate }: UserTableProps) {
     setUserToDelete(null);
   };
 
-  const handleAddUser = (newUser: Omit<User, 'id' | 'registrationDate' | 'avatar'>) => {
-    const currentUsers = getUsers();
-    const userWithId: User = {
+  const handleAddUser = async (newUser: Omit<User, 'id'| 'registrationDate' | 'avatar'>) => {
+    const userWithDetails: Omit<User, 'id'> = {
       ...newUser,
-      id: currentUsers.length > 0 ? Math.max(...currentUsers.map(u => u.id)) + 1 : 1,
-      registrationDate: new Date().toISOString().split('T')[0],
+      registrationDate: new Date().toISOString(),
       avatar: 'https://placehold.co/100x100.png',
     };
-    saveUsers([...currentUsers, userWithId]);
+    await addUser(userWithDetails);
     onUsersUpdate();
   };
   
@@ -149,7 +144,18 @@ export function UserTable({ users, onUsersUpdate }: UserTableProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredUsers.map((user) => (
+              {loading ? (
+                 Array.from({ length: 5 }).map((_, index) => (
+                    <TableRow key={index}>
+                        <TableCell><Skeleton className="h-6 w-32" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-48" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-20" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-16 ml-auto" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-24" /></TableCell>
+                        <TableCell><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+                    </TableRow>
+                 ))
+              ) : filteredUsers.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-3">
@@ -165,7 +171,7 @@ export function UserTable({ users, onUsersUpdate }: UserTableProps) {
                     <Badge variant={getStatusBadgeVariant(user.status)}>{user.status}</Badge>
                   </TableCell>
                   <TableCell className="text-right">{user.points.toLocaleString()}</TableCell>
-                  <TableCell>{user.registrationDate}</TableCell>
+                  <TableCell>{new Date(user.registrationDate).toLocaleDateString()}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -179,11 +185,11 @@ export function UserTable({ users, onUsersUpdate }: UserTableProps) {
                           <Link href={`/admin/users/${user.id}`}>View Details</Link>
                         </DropdownMenuItem>
                          {user.status === 'Active' ? (
-                          <DropdownMenuItem onClick={() => handleStatusChange(user.id, 'Suspended')}>
+                          <DropdownMenuItem onClick={() => handleStatusChange(user.id, user.name, 'Suspended')}>
                             Suspend User
                           </DropdownMenuItem>
                         ) : (
-                          <DropdownMenuItem onClick={() => handleStatusChange(user.id, 'Active')}>
+                          <DropdownMenuItem onClick={() => handleStatusChange(user.id, user.name, 'Active')}>
                             Activate User
                           </DropdownMenuItem>
                         )}
@@ -193,6 +199,13 @@ export function UserTable({ users, onUsersUpdate }: UserTableProps) {
                   </TableCell>
                 </TableRow>
               ))}
+              {!loading && filteredUsers.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-24 text-center">
+                    No users found.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

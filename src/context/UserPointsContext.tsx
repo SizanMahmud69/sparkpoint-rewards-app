@@ -4,7 +4,7 @@
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { getLoggedInUser, setLoggedInUser, logoutUser as authLogout } from '@/lib/auth';
-import { getUsers, saveUsers } from '@/lib/storage';
+import { getUserById } from '@/lib/storage';
 import type { User } from '@/lib/types';
 
 interface UserPointsContextType {
@@ -12,6 +12,7 @@ interface UserPointsContextType {
   user: Omit<User, 'password'> | null;
   updatePoints: (amount: number) => void;
   logout: () => void;
+  loading: boolean;
 }
 
 const UserPointsContext = createContext<UserPointsContextType | undefined>(undefined);
@@ -19,50 +20,55 @@ const UserPointsContext = createContext<UserPointsContextType | undefined>(undef
 export const UserPointsProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<Omit<User, 'password'> | null>(null);
   const [points, setPoints] = useState(0);
+  const [loading, setLoading] = useState(true);
   
-  useEffect(() => {
+  const fetchCurrentUser = useCallback(async () => {
+    setLoading(true);
     const loggedInUser = getLoggedInUser();
     if (loggedInUser) {
-      const allUsers = getUsers();
-      const currentUser = allUsers.find(u => u.id === loggedInUser.id);
+      const currentUser = await getUserById(loggedInUser.id);
       if (currentUser) {
         const { password, ...userToDisplay } = currentUser;
         setUser(userToDisplay);
         setPoints(currentUser.points);
       } else {
+        // User not found in DB, log them out
         logout();
       }
     }
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    fetchCurrentUser();
+  }, [fetchCurrentUser]);
 
   const updatePoints = useCallback((amount: number) => {
     if (!user) return;
     
-    const allUsers = getUsers();
-    const userIndex = allUsers.findIndex(u => u.id === user.id);
-
-    if (userIndex > -1) {
-      const newPoints = allUsers[userIndex].points + amount;
-      allUsers[userIndex].points = newPoints;
-      
-      const fullUserRecord = allUsers[userIndex];
-      const { password, ...userToDisplay } = fullUserRecord;
-
-      saveUsers(allUsers);
-      setLoggedInUser(fullUserRecord);
-      setUser(userToDisplay);
-      setPoints(newPoints);
+    const newPoints = points + amount;
+    setPoints(newPoints);
+    
+    // Update local storage session object
+    const sessionUser = getLoggedInUser();
+    if (sessionUser) {
+        setLoggedInUser({ ...sessionUser, points: newPoints });
     }
-  }, [user]);
+
+    // Update state
+    setUser(prevUser => prevUser ? { ...prevUser, points: newPoints } : null);
+
+  }, [user, points]);
 
   const logout = () => {
     authLogout();
     setUser(null);
     setPoints(0);
+    setLoading(false);
   };
 
   return (
-    <UserPointsContext.Provider value={{ user, points, updatePoints, logout }}>
+    <UserPointsContext.Provider value={{ user, points, updatePoints, logout, loading }}>
       {children}
     </UserPointsContext.Provider>
   );

@@ -2,7 +2,7 @@
 'use client';
 
 import type { User } from './types';
-import { getUsers, saveUsers, addPointTransaction } from './storage';
+import { addUser, getUserByEmail, addPointTransaction } from './storage';
 
 const LOGGED_IN_USER_KEY = 'sparkpoint_logged_in_user';
 
@@ -13,44 +13,43 @@ const getLocalStorage = () => {
   return null;
 };
 
-export const registerUser = (name: string, email: string, password: string): { success: boolean; message: string; user?: User } => {
-  const users = getUsers();
-  const existingUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+export const registerUser = async (name: string, email: string, password: string): Promise<{ success: boolean; message: string; user?: User }> => {
+  const existingUser = await getUserByEmail(email);
 
   if (existingUser) {
     return { success: false, message: 'An account with this email already exists.' };
   }
   
-  const newUser: User = {
-    id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,
+  const newUser: Omit<User, 'id'> = {
     name,
     email,
     password, 
     points: 50, 
-    registrationDate: new Date().toISOString().split('T')[0],
+    registrationDate: new Date().toISOString(),
     status: 'Active',
     avatar: 'https://placehold.co/100x100.png',
   };
 
-  addPointTransaction({
-    userId: newUser.id,
+  const addedUser = await addUser(newUser);
+
+  if (!addedUser) {
+    return { success: false, message: 'Failed to create user account.' };
+  }
+
+  await addPointTransaction({
+    userId: addedUser.id,
     task: 'Registration Bonus',
     points: 50,
-    date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+    date: new Date().toISOString(),
   });
-
-  saveUsers([...users, newUser]);
   
-  return { success: true, message: 'Registration successful!', user: newUser };
+  return { success: true, message: 'Registration successful!', user: addedUser };
 };
 
-export const loginUser = (email: string, password: string): { success: boolean; user?: User; message: string } => {
-  const users = getUsers();
-  const user = users.find(
-    u => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-  );
+export const loginUser = async (email: string, password: string): Promise<{ success: boolean; user?: User; message: string }> => {
+  const user = await getUserByEmail(email);
 
-  if (!user) {
+  if (!user || user.password !== password) {
     return { success: false, message: 'Invalid email or password. Please try again.' };
   }
 
@@ -61,20 +60,11 @@ export const loginUser = (email: string, password: string): { success: boolean; 
   return { success: true, user, message: 'Login successful!' };
 };
 
-export const setLoggedInUser = (user: User) => {
+export const setLoggedInUser = (user: User | Omit<User, 'password'>) => {
   const storage = getLocalStorage();
   if (storage) {
     const { password, ...userToStore } = user;
     storage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(userToStore));
-    
-    const allUsers = getUsers();
-    const userIndex = allUsers.findIndex(u => u.id === user.id);
-    if (userIndex !== -1) {
-        allUsers[userIndex] = user;
-    } else {
-        allUsers.push(user);
-    }
-    saveUsers(allUsers);
   }
 };
 

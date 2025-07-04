@@ -34,39 +34,38 @@ export function LoginForm() {
     },
   });
 
-  const onSubmit = (data: LoginFormValues) => {
+  const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     
-    setTimeout(() => {
-      if (data.email === 'admin@spark.point' && data.password === '@Admin@#Spark#') {
-        toast({
-          title: 'Admin Login Successful',
-          description: 'Redirecting to admin dashboard...',
-        });
-        router.push('/admin/dashboard');
-        setIsLoading(false);
-        return;
-      }
-
-      const result = loginUser(data.email, data.password);
-
-      if (result.success && result.user) {
-        setLoggedInUser(result.user);
-        toast({
-          title: 'Login Successful',
-          description: 'Welcome back! Redirecting to your dashboard...',
-        });
-        router.push('/dashboard');
-        router.refresh();
-      } else {
-        toast({
-          variant: "destructive",
-          title: 'Login Failed',
-          description: result.message,
-        });
-      }
+    // Admin login check (can be kept as a backdoor or removed)
+    if (data.email === 'admin@spark.point' && data.password === '@Admin@#Spark#') {
+      toast({
+        title: 'Admin Login Successful',
+        description: 'Redirecting to admin dashboard...',
+      });
+      router.push('/admin/dashboard');
       setIsLoading(false);
-    }, 1000);
+      return;
+    }
+
+    const result = await loginUser(data.email, data.password);
+
+    if (result.success && result.user) {
+      setLoggedInUser(result.user);
+      toast({
+        title: 'Login Successful',
+        description: 'Welcome back! Redirecting to your dashboard...',
+      });
+      router.push('/dashboard');
+      router.refresh();
+    } else {
+      toast({
+        variant: "destructive",
+        title: 'Login Failed',
+        description: result.message,
+      });
+    }
+    setIsLoading(false);
   };
 
   return (

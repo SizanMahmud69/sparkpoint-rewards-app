@@ -40,9 +40,9 @@ export function UserNav() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  const fetchNotifications = () => {
+  const fetchNotifications = async () => {
     if (user) {
-        const userNotifications = getNotificationsForUser(user.id);
+        const userNotifications = await getNotificationsForUser(user.id);
         setNotifications(userNotifications);
         setUnreadCount(userNotifications.filter(n => !n.read).length);
     }
@@ -57,13 +57,11 @@ export function UserNav() {
     router.push('/');
   };
 
-  const handleOpenChange = (open: boolean) => {
-    // When the menu is opened, mark notifications as read.
+  const handleOpenChange = async (open: boolean) => {
     if (open && user && unreadCount > 0) {
-        // Use a timeout to let the user see the unread state briefly
-        setTimeout(() => {
-            markNotificationsAsRead(user.id);
-            fetchNotifications(); // Refresh state
+        setTimeout(async () => {
+            await markNotificationsAsRead(user.id);
+            await fetchNotifications();
         }, 1500);
     }
   }

@@ -1,144 +1,178 @@
 
 'use client';
 
+import { db } from './firebase';
+import { 
+    collection, 
+    getDocs, 
+    addDoc, 
+    doc, 
+    updateDoc, 
+    deleteDoc, 
+    writeBatch, 
+    query, 
+    where, 
+    getDoc,
+    orderBy,
+    limit as firestoreLimit,
+    increment,
+    DocumentData,
+    Query,
+    QueryConstraint,
+    serverTimestamp,
+    Timestamp,
+    collectionGroup
+} from 'firebase/firestore';
 import type { User, Withdrawal, Task, PaymentMethod, PointTransaction, Notification } from './types';
-import { mockUsers, mockWithdrawals, mockTasks, mockPaymentMethods, mockPointHistory, mockNotifications } from './data';
-
-const USERS_KEY = 'sparkpoint_users_v3';
-const WITHDRAWALS_KEY = 'sparkpoint_withdrawals_v3';
-const TASKS_KEY = 'sparkpoint_tasks_v2';
-const PAYMENT_METHODS_KEY = 'sparkpoint_payment_methods_v2';
-const POINT_HISTORY_KEY = 'sparkpoint_point_history_v3';
-const MIN_WITHDRAWAL_KEY = 'sparkpoint_min_withdrawal_v1';
-const NOTIFICATIONS_KEY = 'sparkpoint_notifications_v2';
 
 
-const getLocalStorage = () => {
-  if (typeof window !== 'undefined' && window.localStorage) {
-    return window.localStorage;
-  }
-  return null;
-};
+// Generic function to fetch documents from a collection
+const getCollectionData = async <T>(collectionName: string, options?: { filters?: [string, any, any][], limit?: number, orderBy?: [string, 'asc' | 'desc'] }): Promise<T[]> => {
+    try {
+        const colRef = collection(db, collectionName);
+        const constraints: QueryConstraint[] = [];
 
-const getFromStorage = <T>(key: string, mockData: T[]): T[] => {
-    const storage = getLocalStorage();
-    if (!storage) return []; 
-    const dataJson = storage.getItem(key);
-    if (dataJson) {
-        try {
-            return JSON.parse(dataJson);
-        } catch (e) {
-            console.error(`Failed to parse ${key} from localStorage`, e);
-            return mockData;
+        if (options?.filters) {
+            options.filters.forEach(filter => constraints.push(where(filter[0], filter[1], filter[2])));
         }
-    } else {
-        storage.setItem(key, JSON.stringify(mockData));
-        return mockData;
+        if (options?.orderBy) {
+            constraints.push(orderBy(options.orderBy[0], options.orderBy[1]));
+        }
+        if (options?.limit) {
+            constraints.push(firestoreLimit(options.limit));
+        }
+
+        const q = query(colRef, ...constraints);
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
+    } catch (error) {
+        console.error(`Error fetching ${collectionName}: `, error);
+        return [];
     }
 };
 
-const saveToStorage = <T>(key: string, data: T[]) => {
-    const storage = getLocalStorage();
-    if (storage) {
-        storage.setItem(key, JSON.stringify(data));
+// Generic function to add a document to a collection
+const addDocument = async <T extends object>(collectionName: string, data: T) => {
+    try {
+        const docRef = await addDoc(collection(db, collectionName), data);
+        return { id: docRef.id, ...data } as T & {id: string};
+    } catch (error) {
+        console.error(`Error adding document to ${collectionName}:`, error);
+        return null;
     }
-};
-
-export const getUsers = (): User[] => getFromStorage<User>(USERS_KEY, mockUsers);
-export const saveUsers = (users: User[]) => saveToStorage<User>(USERS_KEY, users);
-
-export const getWithdrawals = (): Withdrawal[] => getFromStorage<Withdrawal>(WITHDRAWALS_KEY, mockWithdrawals);
-export const saveWithdrawals = (withdrawals: Withdrawal[]) => saveToStorage<Withdrawal>(WITHDRAWALS_KEY, withdrawals);
-
-export const getTasks = (): Task[] => getFromStorage<Task>(TASKS_KEY, mockTasks);
-export const saveTasks = (tasks: Task[]) => saveToStorage<Task>(TASKS_KEY, tasks);
-
-export const getPaymentMethods = (): PaymentMethod[] => getFromStorage<PaymentMethod>(PAYMENT_METHODS_KEY, mockPaymentMethods);
-export const savePaymentMethods = (methods: PaymentMethod[]) => saveToStorage<PaymentMethod>(PAYMENT_METHODS_KEY, methods);
-
-export const getAllPointHistory = (): PointTransaction[] => getFromStorage<PointTransaction>(POINT_HISTORY_KEY, mockPointHistory);
-
-export const getPointHistoryForUser = (userId: number): PointTransaction[] => {
-    const allHistory = getAllPointHistory();
-    return allHistory.filter(t => t.userId === userId);
 }
 
-export const addPointTransaction = (transaction: Omit<PointTransaction, 'id'>) => {
-    const allHistory = getAllPointHistory();
-    const newTransaction: PointTransaction = {
-        ...transaction,
-        id: allHistory.length > 0 ? Math.max(...allHistory.map(t => t.id)) + 1 : 1,
-    }
-    saveToStorage<PointTransaction>(POINT_HISTORY_KEY, [newTransaction, ...allHistory]);
+// User Functions
+export const getUsers = (): Promise<User[]> => getCollectionData<User>('users');
+export const getUserById = async (id: string): Promise<User | null> => {
+    const docRef = doc(db, "users", id);
+    const docSnap = await getDoc(docRef);
+    return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } as User : null;
 }
+export const getUserByEmail = async (email: string): Promise<User | null> => {
+    const users = await getCollectionData<User>('users', { filters: [['email', '==', email.toLowerCase()]], limit: 1 });
+    return users.length > 0 ? users[0] : null;
+};
+export const addUser = (data: Omit<User, 'id'>): Promise<(User & {id: string}) | null> => addDocument<Omit<User, 'id'>>('users', data);
+export const updateUserStatus = async (id: string, status: 'Active' | 'Suspended'): Promise<void> => {
+    const userRef = doc(db, 'users', id);
+    await updateDoc(userRef, { status });
+};
+export const updateUserPoints = async (id: string, pointsToAdd: number): Promise<void> => {
+    const userRef = doc(db, 'users', id);
+    await updateDoc(userRef, { points: increment(pointsToAdd) });
+};
 
-export const getMinWithdrawal = (): number => {
-    const storage = getLocalStorage();
-    if (!storage) return 1000;
-    const minWithdrawal = storage.getItem(MIN_WITHDRAWAL_KEY);
-    if (minWithdrawal) {
-        try {
-            return JSON.parse(minWithdrawal);
-        } catch (e) {
-            console.error(`Failed to parse ${MIN_WITHDRAWAL_KEY} from localStorage`, e);
-            return 1000;
-        }
-    } else {
-        storage.setItem(MIN_WITHDRAWAL_KEY, JSON.stringify(1000));
-        return 1000;
+// Withdrawal Functions
+export const getWithdrawals = (options?: { filters?: [string, any, any][], limit?: number, orderBy?: [string, 'asc' | 'desc'] }): Promise<Withdrawal[]> => getCollectionData<Withdrawal>('withdrawals', options);
+export const getWithdrawalsForUser = (userId: string): Promise<Withdrawal[]> => getCollectionData<Withdrawal>('withdrawals', { filters: [['userId', '==', userId]] });
+export const addWithdrawal = (data: Omit<Withdrawal, 'id'>): Promise<(Withdrawal & {id: string}) | null> => addDocument<Omit<Withdrawal, 'id'>>('withdrawals', data);
+export const updateWithdrawalStatus = async (id: string, status: 'Pending' | 'Completed' | 'Rejected'): Promise<void> => {
+    const withdrawalRef = doc(db, 'withdrawals', id);
+    await updateDoc(withdrawalRef, { status });
+};
+
+// Task Functions
+export const getTasks = (): Promise<Task[]> => getCollectionData<Task>('tasks');
+export const addTask = (data: Omit<Task, 'id'>) => addDocument('tasks', data);
+export const updateTask = async (id: string, data: Partial<Task>): Promise<void> => {
+    const taskRef = doc(db, 'tasks', id);
+    await updateDoc(taskRef, data);
+};
+
+// Payment Method Functions
+export const getPaymentMethods = (options?: { filters?: [string, any, any][] }): Promise<PaymentMethod[]> => getCollectionData<PaymentMethod>('paymentMethods', options);
+export const addPaymentMethod = (data: Omit<PaymentMethod, 'id'>) => addDocument('paymentMethods', data);
+export const updatePaymentMethod = async (id: string, data: Partial<PaymentMethod>): Promise<void> => {
+    const methodRef = doc(db, 'paymentMethods', id);
+    await updateDoc(methodRef, data);
+};
+export const deletePaymentMethod = async (id: string): Promise<void> => {
+    const methodRef = doc(db, 'paymentMethods', id);
+    await deleteDoc(methodRef);
+};
+
+// Point History Functions
+export const getAllPointHistory = (): Promise<PointTransaction[]> => getCollectionData<PointTransaction>('pointHistory', { orderBy: ['date', 'desc'] });
+export const getPointHistoryForUser = (userId: string): Promise<PointTransaction[]> => getCollectionData<PointTransaction>('pointHistory', { filters: [['userId', '==', userId]], orderBy: ['date', 'desc'] });
+export const addPointTransaction = (data: Omit<PointTransaction, 'id'>): Promise<(PointTransaction & {id: string}) | null> => addDocument<Omit<PointTransaction, 'id'>>('pointHistory', data);
+
+
+// Settings Functions
+export const getMinWithdrawal = async (): Promise<number> => {
+    const docRef = doc(db, "settings", "withdrawals");
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+        return docSnap.data().minWithdrawal || 1000;
     }
+    return 1000;
+};
+export const saveMinWithdrawal = async (amount: number) => {
+    const docRef = doc(db, "settings", "withdrawals");
+    await updateDoc(docRef, { minWithdrawal: amount });
 };
 
-export const saveMinWithdrawal = (amount: number) => {
-    const storage = getLocalStorage();
-    if (storage) {
-        storage.setItem(MIN_WITHDRAWAL_KEY, JSON.stringify(amount));
-    }
+// Notification Functions
+export const getNotificationsForUser = (userId: string): Promise<Notification[]> => {
+    return getCollectionData<Notification>('notifications', { 
+        filters: [['userId', '==', userId]], 
+        orderBy: ['date', 'desc'] 
+    });
+};
+export const addNotification = (data: Omit<Notification, 'id'>) => addDocument<Omit<Notification, 'id'>>('notifications', data);
+export const markNotificationsAsRead = async (userId: string) => {
+    const q = query(collection(db, "notifications"), where("userId", "==", userId), where("read", "==", false));
+    const querySnapshot = await getDocs(q);
+    const batch = writeBatch(db);
+    querySnapshot.docs.forEach(doc => {
+        batch.update(doc.ref, { read: true });
+    });
+    await batch.commit();
 };
 
-// Notification Storage Functions
-export const getAllNotifications = (): Notification[] => getFromStorage<Notification>(NOTIFICATIONS_KEY, mockNotifications);
-export const saveAllNotifications = (notifications: Notification[]) => saveToStorage<Notification>(NOTIFICATIONS_KEY, notifications);
 
-export const getNotificationsForUser = (userId: number): Notification[] => {
-    return getAllNotifications().filter(n => n.userId === userId).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-};
+// Deletion Functions
+export const deleteUserAndData = async (userId: string) => {
+    const batch = writeBatch(db);
+    
+    // Delete user doc
+    const userRef = doc(db, 'users', userId);
+    batch.delete(userRef);
 
-export const addNotification = (notification: Omit<Notification, 'id'>) => {
-    const allNotifications = getAllNotifications();
-    const newNotification: Notification = {
-        ...notification,
-        id: allNotifications.length > 0 ? Math.max(...allNotifications.map(n => n.id)) + 1 : 1,
-    };
-    saveAllNotifications([newNotification, ...allNotifications]);
-};
+    // Find and delete withdrawals
+    const withdrawalsQuery = query(collection(db, 'withdrawals'), where('userId', '==', userId));
+    const withdrawalsSnapshot = await getDocs(withdrawalsQuery);
+    withdrawalsSnapshot.forEach(doc => batch.delete(doc.ref));
 
-export const markNotificationsAsRead = (userId: number) => {
-    const allNotifications = getAllNotifications();
-    const updatedNotifications = allNotifications.map(n => 
-        n.userId === userId ? { ...n, read: true } : n
-    );
-    saveAllNotifications(updatedNotifications);
-};
+    // Find and delete point history
+    const pointsQuery = query(collection(db, 'pointHistory'), where('userId', '==', userId));
+    const pointsSnapshot = await getDocs(pointsQuery);
+    pointsSnapshot.forEach(doc => batch.delete(doc.ref));
 
-export const deleteUserAndData = (userId: number) => {
-    // Delete user
-    const users = getUsers();
-    const updatedUsers = users.filter(u => u.id !== userId);
-    saveUsers(updatedUsers);
+    // Find and delete notifications
+    const notificationsQuery = query(collection(db, 'notifications'), where('userId', '==', userId));
+    const notificationsSnapshot = await getDocs(notificationsQuery);
+    notificationsSnapshot.forEach(doc => batch.delete(doc.ref));
 
-    // Delete withdrawal history
-    const withdrawals = getWithdrawals();
-    const updatedWithdrawals = withdrawals.filter(w => w.userId !== userId);
-    saveWithdrawals(updatedWithdrawals);
-
-    // Delete point history
-    const pointHistory = getAllPointHistory();
-    const updatedPointHistory = pointHistory.filter(p => p.userId !== userId);
-    saveToStorage<PointTransaction>(POINT_HISTORY_KEY, updatedPointHistory);
-
-    // Delete notifications
-    const notifications = getAllNotifications();
-    const updatedNotifications = notifications.filter(n => n.userId !== userId);
-    saveAllNotifications(updatedNotifications);
+    await batch.commit();
 };

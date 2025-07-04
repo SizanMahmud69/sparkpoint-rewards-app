@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -8,7 +9,7 @@ import { Timer } from 'lucide-react';
 import { useUserPoints } from '@/context/UserPointsContext';
 import { cn } from '@/lib/utils';
 import type { Task } from '@/lib/types';
-import { addPointTransaction } from '@/lib/storage';
+import { addPointTransaction, updateUserPoints } from '@/lib/storage';
 
 const segments = [
     { color: '#a0c4ff', label: '10' },
@@ -24,7 +25,7 @@ const segments = [
 const conicGradient = `conic-gradient(from -22.5deg, ${segments.map((s, i) => `${s.color} ${i * 45}deg ${(i + 1) * 45}deg`).join(', ')})`;
 
 export function SpinWheelTask({ task }: { task: Task }) {
-    const { user, updatePoints } = useUserPoints();
+    const { user, updatePoints: contextUpdatePoints } = useUserPoints();
     const { toast } = useToast();
     const [isSpinning, setIsSpinning] = useState(false);
     const [rotation, setRotation] = useState(0);
@@ -83,14 +84,15 @@ export function SpinWheelTask({ task }: { task: Task }) {
         const segmentIndex = Math.floor((targetAngle + 22.5) / 45) % 8;
         const prize = segments[segmentIndex];
 
-        setTimeout(() => {
+        setTimeout(async () => {
             const earnedPoints = parseInt(prize.label, 10);
-            updatePoints(earnedPoints);
-            addPointTransaction({
+            contextUpdatePoints(earnedPoints);
+            await updateUserPoints(user.id, earnedPoints);
+            await addPointTransaction({
                 userId: user.id,
                 task: task.title,
                 points: earnedPoints,
-                date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+                date: new Date().toISOString(),
             });
             toast({
                 title: 'Congratulations!',

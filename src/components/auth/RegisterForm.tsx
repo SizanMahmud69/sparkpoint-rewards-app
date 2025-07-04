@@ -31,29 +31,27 @@ export function RegisterForm() {
     resolver: zodResolver(registerSchema),
   });
 
-  const onSubmit = (data: RegisterFormValues) => {
+  const onSubmit = async (data: RegisterFormValues) => {
     setIsLoading(true);
     
-    const result = registerUser(data.name, data.email, data.password);
+    const result = await registerUser(data.name, data.email, data.password);
 
-    setTimeout(() => {
-      if (result.success && result.user) {
-        setLoggedInUser(result.user);
-        toast({
-          title: 'Registration Successful!',
-          description: 'You have been awarded 50 bonus points. Redirecting to your dashboard...',
-        });
-        router.push('/dashboard');
-        router.refresh();
-      } else {
-        toast({
-          variant: "destructive",
-          title: 'Registration Failed',
-          description: result.message,
-        });
-      }
-      setIsLoading(false);
-    }, 1000);
+    if (result.success && result.user) {
+      setLoggedInUser(result.user);
+      toast({
+        title: 'Registration Successful!',
+        description: 'You have been awarded 50 bonus points. Redirecting to your dashboard...',
+      });
+      router.push('/dashboard');
+      router.refresh();
+    } else {
+      toast({
+        variant: "destructive",
+        title: 'Registration Failed',
+        description: result.message,
+      });
+    }
+    setIsLoading(false);
   };
 
   return (

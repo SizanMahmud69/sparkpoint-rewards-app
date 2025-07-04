@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -52,7 +53,7 @@ export function AddTaskDialog({ open, onOpenChange, onAddTask }: AddTaskDialogPr
   });
 
   const onSubmit = (data: TaskFormValues) => {
-    onAddTask(data);
+    onAddTask({ ...data, enabled: true });
     toast({
       title: 'Task Added',
       description: `Task "${data.title}" has been created successfully.`,

@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Mail, Calendar, Coins } from 'lucide-react';
 import { PointsHistoryTable } from '@/components/user/PointsHistoryTable';
 import { WithdrawalTable } from '@/components/admin/WithdrawalTable';
-import { getUsers, getPointHistoryForUser, getWithdrawals } from '@/lib/storage';
+import { getUserById, getPointHistoryForUser, getWithdrawalsForUser } from '@/lib/storage';
 import type { User, PointTransaction, Withdrawal } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -39,25 +39,23 @@ export default function UserDetailsPage() {
             return;
         }
 
-        const userId = parseInt(id, 10);
-        if (isNaN(userId)) {
-            router.push('/admin/users'); // Redirect if ID is not a number
-            return;
-        }
+        const fetchData = async () => {
+            const foundUser = await getUserById(id);
+            if (foundUser) {
+                setUser(foundUser);
+                const [points, withdrawals] = await Promise.all([
+                    getPointHistoryForUser(id),
+                    getWithdrawalsForUser(id)
+                ]);
+                setPointHistory(points);
+                setWithdrawalHistory(withdrawals);
+            } else {
+                router.push('/admin/users');
+            }
+            setLoading(false);
+        };
 
-        const allUsers = getUsers();
-        const foundUser = allUsers.find(u => u.id === userId);
-        
-        if (foundUser) {
-            setUser(foundUser);
-            setPointHistory(getPointHistoryForUser(userId));
-            const allWithdrawals = getWithdrawals();
-            setWithdrawalHistory(allWithdrawals.filter(w => w.userId === userId));
-        } else {
-            // Handle user not found, maybe redirect or show an error
-            router.push('/admin/users');
-        }
-        setLoading(false);
+        fetchData();
     }, [params.id, router]);
 
     if (loading) {

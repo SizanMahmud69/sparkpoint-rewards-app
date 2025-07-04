@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -30,7 +31,7 @@ type PaymentMethodFormValues = z.infer<typeof paymentMethodSchema>;
 interface AddPaymentMethodDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddMethod: (method: PaymentMethod) => void;
+  onAddMethod: (method: Omit<PaymentMethod, 'id'>) => void;
 }
 
 export function AddPaymentMethodDialog({ open, onOpenChange, onAddMethod }: AddPaymentMethodDialogProps) {
@@ -45,8 +46,7 @@ export function AddPaymentMethodDialog({ open, onOpenChange, onAddMethod }: AddP
   });
 
   const onSubmit = (data: PaymentMethodFormValues) => {
-    // In a real app, this would be an API call.
-    const newMethod: PaymentMethod = { ...data, enabled: true };
+    const newMethod: Omit<PaymentMethod, 'id'> = { ...data, enabled: true };
     onAddMethod(newMethod);
     toast({
       title: 'Method Added',

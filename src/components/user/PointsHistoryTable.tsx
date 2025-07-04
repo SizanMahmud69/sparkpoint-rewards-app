@@ -55,7 +55,7 @@ export function PointsHistoryTable({ transactions }: { transactions: PointTransa
           transactions.map((transaction) => (
             <TableRow key={transaction.id}>
               <TableCell className="font-medium">{transaction.task}</TableCell>
-              <TableCell>{transaction.date}</TableCell>
+              <TableCell>{new Date(transaction.date).toLocaleDateString()}</TableCell>
               <TableCell className="text-right">
                 {getBadge(transaction)}
               </TableCell>

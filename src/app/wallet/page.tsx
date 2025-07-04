@@ -18,12 +18,21 @@ import {
 import type { PointTransaction, Withdrawal, User, PaymentMethod } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useUserPoints } from '@/context/UserPointsContext';
-import { getWithdrawals, saveWithdrawals, getUsers, getPointHistoryForUser, getPaymentMethods, saveUsers, addPointTransaction, getMinWithdrawal } from '@/lib/storage';
+import { 
+  getWithdrawalsForUser,
+  addWithdrawal,
+  getUsers, 
+  getPointHistoryForUser, 
+  getPaymentMethods, 
+  updateUserPoints,
+  addPointTransaction, 
+  getMinWithdrawal 
+} from '@/lib/storage';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function WalletPage() {
   const { toast } = useToast();
-  const { user, points, updatePoints } = useUserPoints();
+  const { user, points, updatePoints: contextUpdatePoints } = useUserPoints();
 
   const [withdrawalHistory, setWithdrawalHistory] = useState<Withdrawal[]>([]);
   const [pointHistory, setPointHistory] = useState<PointTransaction[]>([]);
@@ -32,13 +41,20 @@ export default function WalletPage() {
   const [minWithdrawalPoints, setMinWithdrawalPoints] = useState(1000);
   const [isClient, setIsClient] = useState(false);
 
-  const refreshData = () => {
+  const refreshData = async () => {
      if (user) {
-      setWithdrawalHistory(getWithdrawals().filter(w => w.userId === user.id));
-      setPointHistory(getPointHistoryForUser(user.id).sort((a, b) => b.id - a.id));
-      setAllUsers(getUsers());
-      setPaymentMethods(getPaymentMethods().filter(m => m.enabled));
-      setMinWithdrawalPoints(getMinWithdrawal());
+        const [withdrawals, pointsHistory, users, methods, minWithdrawal] = await Promise.all([
+            getWithdrawalsForUser(user.id),
+            getPointHistoryForUser(user.id),
+            getUsers(),
+            getPaymentMethods({ filters: [['enabled', '==', true]] }),
+            getMinWithdrawal()
+        ]);
+        setWithdrawalHistory(withdrawals.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        setPointHistory(pointsHistory.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        setAllUsers(users);
+        setPaymentMethods(methods);
+        setMinWithdrawalPoints(minWithdrawal);
     }
   }
 
@@ -52,7 +68,7 @@ export default function WalletPage() {
   const [isPointsHistoryDialogOpen, setIsPointsHistoryDialogOpen] = useState(false);
   const [isWithdrawalHistoryDialogOpen, setIsWithdrawalHistoryDialogOpen] = useState(false);
   
-  const handleWithdrawalRequest = (data: WithdrawalFormValues) => {
+  const handleWithdrawalRequest = async (data: WithdrawalFormValues) => {
     if (!user) {
       toast({ variant: "destructive", title: "Error", description: "You must be logged in to make a withdrawal." });
       return;
@@ -67,30 +83,29 @@ export default function WalletPage() {
       return;
     }
 
-    updatePoints(-data.points);
+    contextUpdatePoints(-data.points);
+    await updateUserPoints(user.id, -data.points);
 
-    const newWithdrawal: Withdrawal = {
-      id: Math.random(),
+    const newWithdrawal: Omit<Withdrawal, 'id'> = {
       userId: user.id,
       userName: user.name,
       amountPoints: data.points,
       amountUSD: data.points / 1000,
       method: data.method as any,
       details: data.details,
-      date: new Date().toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }),
+      date: new Date().toISOString(),
       status: 'Pending',
     };
+    
+    await addWithdrawal(newWithdrawal);
 
-    addPointTransaction({
+    await addPointTransaction({
         userId: user.id,
         task: 'Withdrawal Request',
         points: -data.points,
-        date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+        date: new Date().toISOString(),
     });
 
-    const allWithdrawals = getWithdrawals();
-    saveWithdrawals([newWithdrawal, ...allWithdrawals]);
-    
     refreshData();
 
     toast({

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -7,22 +8,28 @@ import { TaskTable } from '@/components/admin/TaskTable';
 import type { PaymentMethod, Task } from '@/lib/types';
 import { getPaymentMethods, getTasks } from '@/lib/storage';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AdminSettingsPage() {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const refreshWithdrawalData = () => {
-    setPaymentMethods(getPaymentMethods());
+  const refreshWithdrawalData = async () => {
+    setPaymentMethods(await getPaymentMethods());
   };
   
-  const refreshTaskData = () => {
-    setTasks(getTasks());
+  const refreshTaskData = async () => {
+    setTasks(await getTasks());
   }
 
   useEffect(() => {
-    refreshWithdrawalData();
-    refreshTaskData();
+    const loadData = async () => {
+      setLoading(true);
+      await Promise.all([refreshWithdrawalData(), refreshTaskData()]);
+      setLoading(false);
+    }
+    loadData();
   }, []);
 
   return (
@@ -38,16 +45,18 @@ export default function AdminSettingsPage() {
           <TabsTrigger value="withdrawals">Withdrawal Settings</TabsTrigger>
         </TabsList>
         <TabsContent value="tasks" className="mt-6">
-            <TaskTable tasks={tasks} />
+            {loading ? <Skeleton className="h-64 w-full" /> : <TaskTable tasks={tasks} onTaskUpdate={refreshTaskData} />}
         </TabsContent>
         <TabsContent value="withdrawals" className="mt-6">
           <div className="space-y-8">
              <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
                 <div className="xl:col-span-2">
-                  <WithdrawalFormManagement 
-                    initialMethods={paymentMethods}
-                    onMethodsUpdate={refreshWithdrawalData}
-                  />
+                  {loading ? <Skeleton className="h-64 w-full" /> : (
+                    <WithdrawalFormManagement 
+                      initialMethods={paymentMethods}
+                      onMethodsUpdate={refreshWithdrawalData}
+                    />
+                  )}
                 </div>
                 <div className="xl:col-span-1">
                   <WithdrawalSettings />

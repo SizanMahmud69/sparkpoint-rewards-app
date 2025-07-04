@@ -20,7 +20,7 @@ import { Button } from '../ui/button';
 import { Calendar, HeartCrack, VenetianMask, RotateCw, PlusCircle, Coins, Gift, Dices } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AddTaskDialog } from './AddTaskDialog';
-import { saveTasks } from '@/lib/storage';
+import { updateTask, addTask } from '@/lib/storage';
 
 const iconMap: { [key: string]: React.ComponentType<LucideProps> } = {
   Calendar,
@@ -31,39 +31,27 @@ const iconMap: { [key: string]: React.ComponentType<LucideProps> } = {
   Dices,
 };
 
-export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
-  const [tasks, setTasks] = React.useState(initialTasks);
+interface TaskTableProps {
+  tasks: Task[];
+  onTaskUpdate: () => void;
+}
+
+export function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
   const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = React.useState(false);
 
-  React.useEffect(() => {
-    setTasks(initialTasks);
-  }, [initialTasks]);
-
-  const handleEnabledChange = (id: number, enabled: boolean) => {
-    const updatedTasks = tasks.map(task =>
-        task.id === id ? { ...task, enabled } : task
-      );
-    setTasks(updatedTasks);
-    saveTasks(updatedTasks);
+  const handleEnabledChange = async (id: string, enabled: boolean) => {
+    await updateTask(id, { enabled });
+    onTaskUpdate();
   };
 
-  const handlePointsChange = (id: number, points: string) => {
-     const updatedTasks = tasks.map(task =>
-        task.id === id ? { ...task, points } : task
-      );
-    setTasks(updatedTasks);
-    saveTasks(updatedTasks);
+  const handlePointsChange = async (id: string, points: string) => {
+    await updateTask(id, { points });
+    onTaskUpdate();
   };
 
-  const handleAddTask = (newTaskData: Omit<Task, 'id' | 'enabled'>) => {
-    const newTask: Task = {
-      ...newTaskData,
-      id: tasks.length > 0 ? Math.max(...tasks.map(t => t.id)) + 1 : 1,
-      enabled: true, 
-    };
-    const newTasks = [newTask, ...tasks];
-    setTasks(newTasks);
-    saveTasks(newTasks);
+  const handleAddTask = async (newTaskData: Omit<Task, 'id'>) => {
+    await addTask(newTaskData);
+    onTaskUpdate();
   };
 
 

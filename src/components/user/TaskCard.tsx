@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -9,7 +10,7 @@ import { Calendar, HeartCrack, VenetianMask, RotateCw, Timer, Gift, Dices } from
 import { cn } from '@/lib/utils';
 import type { Task } from '@/lib/types';
 import { useUserPoints } from '@/context/UserPointsContext';
-import { addPointTransaction } from '@/lib/storage';
+import { addPointTransaction, updateUserPoints } from '@/lib/storage';
 
 const iconMap: { [key: string]: React.ComponentType<LucideProps> } = {
   Calendar,
@@ -24,7 +25,7 @@ type TaskCardProps = Task;
 
 export function TaskCard({ id, title, description, points, icon, color, actionText }: TaskCardProps) {
   const { toast } = useToast();
-  const { user, updatePoints } = useUserPoints();
+  const { user, updatePoints: contextUpdatePoints } = useUserPoints();
   const [isDisabled, setIsDisabled] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [earnedPoints, setEarnedPoints] = useState<number | null>(null);
@@ -80,7 +81,7 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
     return () => clearInterval(intervalId);
   }, [timeLeft, isDisabled, taskKey, pointsKey]);
 
-  const handleTaskComplete = () => {
+  const handleTaskComplete = async () => {
     if (!user || !taskKey || !pointsKey) return;
     
     let possiblePoints: number[];
@@ -94,12 +95,14 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
     }
     const finalEarnedPoints = possiblePoints[Math.floor(Math.random() * possiblePoints.length)] || possiblePoints[0];
 
-    updatePoints(finalEarnedPoints);
-    addPointTransaction({
+    contextUpdatePoints(finalEarnedPoints);
+    await updateUserPoints(user.id, finalEarnedPoints);
+    
+    await addPointTransaction({
         userId: user.id,
         task: title,
         points: finalEarnedPoints,
-        date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+        date: new Date().toISOString(),
     });
 
     toast({

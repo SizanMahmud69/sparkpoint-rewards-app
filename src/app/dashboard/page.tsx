@@ -9,13 +9,20 @@ import { SpinWheelTask } from '@/components/user/SpinWheelTask';
 import { useUserPoints } from '@/context/UserPointsContext';
 import { getTasks } from '@/lib/storage';
 import type { Task } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DashboardPage() {
   const { user, points } = useUserPoints();
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setTasks(getTasks());
+    const fetchTasks = async () => {
+      setLoading(true);
+      setTasks(await getTasks());
+      setLoading(false);
+    }
+    fetchTasks();
   }, []);
   
   const enabledTasks = tasks.filter(task => task.enabled);
@@ -57,14 +64,22 @@ export default function DashboardPage() {
       {/* Available Tasks Section */}
       <section className="space-y-6">
         <h2 className="text-2xl font-bold font-headline">Available Tasks</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {otherTasks.map((task) => (
-            <TaskCard key={task.id} {...task} />
-          ))}
-          {spinWheelTask && (
-            <SpinWheelTask task={spinWheelTask} />
-          )}
-        </div>
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <Skeleton key={index} className="h-64 w-full rounded-2xl" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {otherTasks.map((task) => (
+              <TaskCard key={task.id} {...task} />
+            ))}
+            {spinWheelTask && (
+              <SpinWheelTask task={spinWheelTask} />
+            )}
+          </div>
+        )}
       </section>
 
     </div>

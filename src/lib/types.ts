@@ -1,7 +1,7 @@
 
 
 export type User = {
-  id: number;
+  id: string;
   name: string;
   email: string;
   password?: string;
@@ -12,8 +12,8 @@ export type User = {
 };
 
 export type Withdrawal = {
-  id: number;
-  userId: number;
+  id: string;
+  userId: string;
   userName: string;
   amountPoints: number;
   amountUSD: number;
@@ -24,15 +24,15 @@ export type Withdrawal = {
 };
 
 export type PointTransaction = {
-  id: number;
-  userId: number;
+  id: string;
+  userId: string;
   task: string;
   points: number;
   date: string;
 };
 
 export type Task = {
-  id: number;
+  id: string;
   title: string;
   description: string;
   points: string;
@@ -43,6 +43,7 @@ export type Task = {
 };
 
 export type PaymentMethod = {
+  id: string;
   value: string;
   label: string;
   placeholder: string;
@@ -50,8 +51,8 @@ export type PaymentMethod = {
 };
 
 export type Notification = {
-  id: number;
-  userId: number;
+  id: string;
+  userId: string;
   title: string;
   description: string;
   type: 'success' | 'error' | 'info';

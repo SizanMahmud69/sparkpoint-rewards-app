@@ -8,9 +8,12 @@ import type { User } from '@/lib/types';
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const fetchUsers = () => {
-    setUsers(getUsers());
+  const fetchUsers = async () => {
+    setLoading(true);
+    setUsers(await getUsers());
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -21,7 +24,7 @@ export default function AdminUsersPage() {
     <div className="space-y-8">
       <h1 className="text-3xl font-bold font-headline">User Management</h1>
       <div>
-        <UserTable users={users} onUsersUpdate={fetchUsers} />
+        <UserTable users={users} onUsersUpdate={fetchUsers} loading={loading} />
       </div>
     </div>
   );

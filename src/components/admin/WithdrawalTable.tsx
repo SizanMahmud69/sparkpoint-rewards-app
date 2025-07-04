@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Skeleton } from '../ui/skeleton';
 
 
 export function WithdrawalTable({
@@ -32,43 +33,29 @@ export function WithdrawalTable({
   users,
   isUserView = false,
   onStatusChange,
+  loading = false,
 }: {
   withdrawals: Withdrawal[];
   users: User[];
   isUserView?: boolean;
-  onStatusChange?: (id: number, newStatus: Withdrawal['status']) => void;
+  onStatusChange?: (id: string, newStatus: Withdrawal['status']) => void;
+  loading?: boolean;
 }) {
   const [searchTerm, setSearchTerm] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('All');
 
   const userMap = React.useMemo(() => new Map(users.map(user => [user.id, user])), [users]);
 
-  const getStatusBadge = (status: Withdrawal['status']) => {
+  const getStatusBadgeClass = (status: Withdrawal['status']) => {
     switch (status) {
       case 'Completed':
-        return (
-          <Badge variant="outline" className="capitalize border-transparent bg-green-500/20 text-green-700 dark:text-green-400">
-            {status}
-          </Badge>
-        );
+        return "capitalize border-transparent bg-green-500/20 text-green-700 dark:text-green-400";
       case 'Pending':
-        return (
-          <Badge variant="outline" className="capitalize border-transparent bg-yellow-400/20 text-yellow-600 dark:text-yellow-400">
-            {status}
-          </Badge>
-        );
+        return "capitalize border-transparent bg-yellow-400/20 text-yellow-600 dark:text-yellow-400";
       case 'Rejected':
-        return (
-          <Badge variant="outline" className="capitalize border-transparent bg-red-500/20 text-red-600 dark:text-red-400">
-            {status}
-          </Badge>
-        );
+        return "capitalize border-transparent bg-red-500/20 text-red-600 dark:text-red-400";
       default:
-        return (
-          <Badge variant="outline" className="capitalize">
-            {status}
-          </Badge>
-        );
+        return "";
     }
   };
 
@@ -128,13 +115,25 @@ export function WithdrawalTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredWithdrawals.length > 0 ? filteredWithdrawals.map((w) => {
+            {loading ? (
+                Array.from({length: 5}).map((_, i) => (
+                    <TableRow key={i}>
+                        <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-24" /></TableCell>
+                        {!isUserView && <TableCell><Skeleton className="h-5 w-32" /></TableCell>}
+                        <TableCell><Skeleton className="h-5 w-28" /></TableCell>
+                        <TableCell className="text-right"><Skeleton className="h-5 w-20 ml-auto" /></TableCell>
+                        <TableCell className="text-center"><Skeleton className="h-6 w-24 mx-auto" /></TableCell>
+                        {!isUserView && <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>}
+                    </TableRow>
+                ))
+            ) : filteredWithdrawals.length > 0 ? filteredWithdrawals.map((w) => {
               const user = userMap.get(w.userId);
+              const withdrawalDate = new Date(w.date);
               return (
               <TableRow key={w.id}>
                 <TableCell className="hidden md:table-cell">
-                  <div className="font-mono text-sm">{w.date.split(',')[0]}</div>
-                  <div className="text-xs text-muted-foreground font-mono">{w.date.split(',').slice(1).join(' ')}</div>
+                  <div className="font-mono text-sm">{withdrawalDate.toLocaleDateString()}</div>
+                  <div className="text-xs text-muted-foreground font-mono">{withdrawalDate.toLocaleTimeString()}</div>
                 </TableCell>
                 {!isUserView && (
                   <TableCell>
@@ -145,7 +144,7 @@ export function WithdrawalTable({
                       </Avatar>
                       <div>
                           <div className="font-medium">{user?.name}</div>
-                          <div className="text-xs text-muted-foreground">ID: {w.userId}</div>
+                          <div className="text-xs text-muted-foreground">ID: {w.userId.substring(0,6)}...</div>
                       </div>
                     </div>
                   </TableCell>
@@ -159,7 +158,9 @@ export function WithdrawalTable({
                     <div className="text-xs text-muted-foreground">${w.amountUSD.toFixed(2)}</div>
                 </TableCell>
                 <TableCell className="text-center">
-                    {getStatusBadge(w.status)}
+                    <Badge variant="outline" className={getStatusBadgeClass(w.status)}>
+                        {w.status}
+                    </Badge>
                 </TableCell>
                 {!isUserView && (
                     <TableCell className="text-right">

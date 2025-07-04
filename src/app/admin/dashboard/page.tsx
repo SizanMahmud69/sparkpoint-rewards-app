@@ -11,20 +11,33 @@ import { Badge } from '@/components/ui/badge';
 import type { Withdrawal, User } from '@/lib/types';
 import { PointsEarnedChart } from '@/components/admin/PointsEarnedChart';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getUsers, getWithdrawals, getTasks, getAllPointHistory } from '@/lib/storage';
+import { getWithdrawals, getTasks, getAllPointHistory, getUsers } from '@/lib/storage';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const getStatusBadgeVariant = (status: Withdrawal['status']) => {
-  switch (status) {
-    case 'Completed':
-      return 'default';
-    case 'Pending':
-      return 'secondary';
-    case 'Rejected':
-      return 'destructive';
-    default:
-      return 'outline';
-  }
+    switch (status) {
+        case 'Completed':
+            return 'outline';
+        case 'Pending':
+            return 'secondary';
+        case 'Rejected':
+            return 'destructive';
+        default:
+            return 'outline';
+    }
+};
+
+const getStatusBadgeClass = (status: Withdrawal['status']) => {
+    switch (status) {
+      case 'Completed':
+          return "capitalize border-transparent bg-green-500/20 text-green-700 dark:text-green-400";
+      case 'Pending':
+          return "capitalize border-transparent bg-yellow-400/20 text-yellow-600 dark:text-yellow-400";
+      case 'Rejected':
+          return "capitalize border-transparent bg-red-500/20 text-red-600 dark:text-red-400";
+      default:
+          return "";
+    }
 };
 
 interface DashboardStats {
@@ -37,29 +50,36 @@ interface DashboardStats {
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentWithdrawals, setRecentWithdrawals] = useState<Withdrawal[]>([]);
-  const [userMap, setUserMap] = useState<Map<number, User>>(new Map());
+  const [userMap, setUserMap] = useState<Map<string, User>>(new Map());
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const allUsers = getUsers();
-    const allWithdrawals = getWithdrawals();
-    const allTasks = getTasks();
-    const allPointHistory = getAllPointHistory();
-    
-    const totalUsers = allUsers.length;
-    const pendingWithdrawals = allWithdrawals.filter(w => w.status === 'Pending').length;
-    const totalPointsEarned = allPointHistory.filter(t => t.points > 0).reduce((sum, t) => sum + t.points, 0);
-    const activeTasks = allTasks.filter(t => t.enabled).length;
+    const fetchData = async () => {
+        setLoading(true);
+        const [allUsers, allWithdrawals, allTasks, allPointHistory] = await Promise.all([
+            getUsers(),
+            getWithdrawals({ limit: 5, orderBy: ['date', 'desc'] }),
+            getTasks(),
+            getAllPointHistory()
+        ]);
+        
+        const totalUsers = allUsers.length;
+        const pendingWithdrawalsCount = (await getWithdrawals({ filters: [['status', '==', 'Pending']] })).length;
+        const totalPointsEarned = allPointHistory.filter(t => t.points > 0).reduce((sum, t) => sum + t.points, 0);
+        const activeTasks = allTasks.filter(t => t.enabled).length;
 
-    setStats({
-      totalUsers,
-      pendingWithdrawals,
-      totalPointsEarned,
-      activeTasks,
-    });
-    
-    setRecentWithdrawals(allWithdrawals.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5));
-    setUserMap(new Map(allUsers.map(user => [user.id, user])));
-
+        setStats({
+          totalUsers,
+          pendingWithdrawals: pendingWithdrawalsCount,
+          totalPointsEarned,
+          activeTasks,
+        });
+        
+        setRecentWithdrawals(allWithdrawals);
+        setUserMap(new Map(allUsers.map(user => [user.id, user])));
+        setLoading(false);
+    }
+    fetchData();
   }, []);
 
   const formatPoints = (points: number) => {
@@ -75,7 +95,7 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats ? (
+        {stats && !loading ? (
           <>
             <StatCard 
               title="Total Users"
@@ -155,7 +175,7 @@ export default function AdminDashboardPage() {
                                     </Avatar>
                                     <div>
                                         <div className="font-medium">{w.userName}</div>
-                                        <div className="text-sm text-muted-foreground">{w.date}</div>
+                                        <div className="text-sm text-muted-foreground">{new Date(w.date).toLocaleString()}</div>
                                     </div>
                                 </div>
                             </TableCell>
@@ -168,13 +188,13 @@ export default function AdminDashboardPage() {
                                 <div className="text-xs text-muted-foreground">${w.amountUSD.toFixed(2)}</div>
                             </TableCell>
                             <TableCell className="text-right">
-                                <Badge variant={getStatusBadgeVariant(w.status)}>{w.status}</Badge>
+                                <Badge variant={getStatusBadgeVariant(w.status)} className={getStatusBadgeClass(w.status)}>{w.status}</Badge>
                             </TableCell>
                         </TableRow>
                     )}) : (
                       <TableRow>
                         <TableCell colSpan={4} className="h-24 text-center">
-                          No recent withdrawals.
+                          {loading ? 'Loading...' : 'No recent withdrawals.'}
                         </TableCell>
                       </TableRow>
                     )}

@@ -21,7 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
-import { getPaymentMethods, savePaymentMethods } from '@/lib/storage';
+import { updatePaymentMethod, addPaymentMethod, deletePaymentMethod } from '@/lib/storage';
 
 interface WithdrawalFormManagementProps {
   initialMethods: PaymentMethod[];
@@ -39,15 +39,13 @@ export function WithdrawalFormManagement({ initialMethods, onMethodsUpdate }: Wi
     setMethods(initialMethods);
   }, [initialMethods]);
 
-  const handleEnabledChange = (value: string, enabled: boolean) => {
-    const updatedMethods = methods.map(method => method.value === value ? { ...method, enabled } : method);
-    savePaymentMethods(updatedMethods);
+  const handleEnabledChange = async (id: string, enabled: boolean) => {
+    await updatePaymentMethod(id, { enabled });
     onMethodsUpdate();
   };
 
-  const handleAddMethod = (newMethod: PaymentMethod) => {
-    const currentMethods = getPaymentMethods();
-    savePaymentMethods([...currentMethods, newMethod]);
+  const handleAddMethod = async (newMethodData: Omit<PaymentMethod, 'id'>) => {
+    await addPaymentMethod(newMethodData);
     onMethodsUpdate();
   };
 
@@ -56,10 +54,9 @@ export function WithdrawalFormManagement({ initialMethods, onMethodsUpdate }: Wi
     setIsAlertOpen(true);
   };
 
-  const handleDeleteMethod = () => {
+  const handleDeleteMethod = async () => {
     if (!methodToDelete) return;
-    const currentMethods = getPaymentMethods();
-    savePaymentMethods(currentMethods.filter(method => method.value !== methodToDelete.value));
+    await deletePaymentMethod(methodToDelete.id);
     toast({
       title: 'Method Deleted',
       description: `The "${methodToDelete.value}" payment method has been removed.`,
@@ -98,7 +95,7 @@ export function WithdrawalFormManagement({ initialMethods, onMethodsUpdate }: Wi
             </TableHeader>
             <TableBody>
               {methods.map((method) => (
-                <TableRow key={method.value}>
+                <TableRow key={method.id}>
                   <TableCell className="font-medium">{method.value}</TableCell>
                   <TableCell className="text-muted-foreground">{method.label}</TableCell>
                   <TableCell className="text-muted-foreground hidden sm:table-cell">{method.placeholder}</TableCell>
@@ -109,7 +106,7 @@ export function WithdrawalFormManagement({ initialMethods, onMethodsUpdate }: Wi
                       </Badge>
                       <Switch
                         checked={method.enabled}
-                        onCheckedChange={(checked) => handleEnabledChange(method.value, checked)}
+                        onCheckedChange={(checked) => handleEnabledChange(method.id, checked)}
                         aria-label={`Toggle ${method.label}`}
                       />
                     </div>

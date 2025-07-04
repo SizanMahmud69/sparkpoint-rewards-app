@@ -3,58 +3,52 @@
 
 import { useState, useEffect } from 'react';
 import { WithdrawalTable } from '@/components/admin/WithdrawalTable';
-import { getWithdrawals, saveWithdrawals, getUsers, saveUsers, addPointTransaction, addNotification } from '@/lib/storage';
+import { getWithdrawals, updateWithdrawalStatus, getUsers, updateUserPoints, addPointTransaction, addNotification } from '@/lib/storage';
 import type { Withdrawal, User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 export default function AdminWithdrawalsPage() {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const refreshData = () => {
-    setWithdrawals(getWithdrawals());
-    setUsers(getUsers());
+  const refreshData = async () => {
+    setLoading(true);
+    const [w, u] = await Promise.all([getWithdrawals(), getUsers()]);
+    setWithdrawals(w);
+    setUsers(u);
+    setLoading(false);
   };
 
   useEffect(() => {
     refreshData();
   }, []);
 
-  const handleStatusChange = (id: number, newStatus: Withdrawal['status']) => {
-    const currentWithdrawals = getWithdrawals();
-    const withdrawal = currentWithdrawals.find(w => w.id === id);
+  const handleStatusChange = async (id: string, newStatus: Withdrawal['status']) => {
+    const withdrawal = withdrawals.find(w => w.id === id);
     if (!withdrawal) return;
 
-    const updatedWithdrawals = currentWithdrawals.map(w =>
-      w.id === id ? { ...w, status: newStatus } : w
-    );
-    saveWithdrawals(updatedWithdrawals);
+    await updateWithdrawalStatus(id, newStatus);
     
-    const notificationDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    const notificationDate = new Date().toISOString();
 
     if (newStatus === 'Rejected') {
-      const allUsers = getUsers();
-      const updatedUsers = allUsers.map(user => {
-        if (user.id === withdrawal.userId) {
-          toast({
-            title: "Withdrawal Rejected",
-            description: `${withdrawal.amountPoints.toLocaleString()} points have been refunded to ${withdrawal.userName}.`
-          });
-          return { ...user, points: user.points + withdrawal.amountPoints };
-        }
-        return user;
-      });
-      saveUsers(updatedUsers);
+      await updateUserPoints(withdrawal.userId, withdrawal.amountPoints);
       
-      addPointTransaction({
+      toast({
+        title: "Withdrawal Rejected",
+        description: `${withdrawal.amountPoints.toLocaleString()} points have been refunded to ${withdrawal.userName}.`
+      });
+      
+      await addPointTransaction({
           userId: withdrawal.userId,
           task: 'Refund: Withdrawal Rejected',
           points: withdrawal.amountPoints,
           date: notificationDate,
       });
       
-      addNotification({
+      await addNotification({
           userId: withdrawal.userId,
           title: 'Withdrawal Request Rejected',
           description: `Your request for ${withdrawal.amountPoints.toLocaleString()} points was rejected. The points have been refunded to your account.`,
@@ -69,7 +63,7 @@ export default function AdminWithdrawalsPage() {
           description: `Request for ${withdrawal.amountPoints.toLocaleString()} points from ${withdrawal.userName} has been marked as completed.`
         });
 
-       addNotification({
+       await addNotification({
           userId: withdrawal.userId,
           title: 'Withdrawal Approved!',
           description: `Your withdrawal of ${withdrawal.amountPoints.toLocaleString()} points ($${withdrawal.amountUSD.toFixed(2)}) has been processed successfully.`,
@@ -91,7 +85,8 @@ export default function AdminWithdrawalsPage() {
       <WithdrawalTable 
         withdrawals={withdrawals} 
         users={users}
-        onStatusChange={handleStatusChange} 
+        onStatusChange={handleStatusChange}
+        loading={loading}
       />
     </div>
   );
