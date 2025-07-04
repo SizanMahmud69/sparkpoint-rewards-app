@@ -1,9 +1,33 @@
+"use client";
+
+import { useState, useRef, type ChangeEvent } from "react";
 import { UserHeader } from "@/components/user/UserHeader";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Coins, Mail, Calendar, Monitor } from 'lucide-react';
+import { Coins, Mail, Calendar, Monitor, Camera } from 'lucide-react';
+import { Button } from "@/components/ui/button";
 
 export default function ProfilePage() {
+    const [avatar, setAvatar] = useState("https://placehold.co/100x100.png");
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (loadEvent) => {
+                if (loadEvent.target?.result) {
+                    setAvatar(loadEvent.target.result as string);
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleEditClick = () => {
+        fileInputRef.current?.click();
+    };
+
     return (
         <div className="flex min-h-screen flex-col">
             <UserHeader />
@@ -16,10 +40,28 @@ export default function ProfilePage() {
                             <Card className="shadow-lg overflow-hidden">
                                 <CardHeader className="p-0">
                                     <div className="bg-primary/10 p-8 flex flex-col items-center text-center">
-                                        <Avatar className="h-24 w-24 mb-4 border-4 border-white shadow-md">
-                                            <AvatarImage src="https://placehold.co/100x100.png" alt="@user" data-ai-hint="person"/>
-                                            <AvatarFallback>JD</AvatarFallback>
-                                        </Avatar>
+                                        <div className="relative">
+                                            <Avatar className="h-24 w-24 mb-4 border-4 border-white shadow-md">
+                                                <AvatarImage src={avatar} alt="@user" data-ai-hint="person"/>
+                                                <AvatarFallback>JD</AvatarFallback>
+                                            </Avatar>
+                                             <Button
+                                                onClick={handleEditClick}
+                                                variant="outline"
+                                                size="icon"
+                                                className="absolute bottom-4 right-0 rounded-full bg-white shadow-md hover:bg-muted"
+                                            >
+                                                <Camera className="h-5 w-5 text-primary" />
+                                                <span className="sr-only">Change profile picture</span>
+                                            </Button>
+                                            <input
+                                                type="file"
+                                                ref={fileInputRef}
+                                                onChange={handleAvatarChange}
+                                                className="hidden"
+                                                accept="image/*"
+                                            />
+                                        </div>
                                         <CardTitle className="text-2xl font-headline">John Doe</CardTitle>
                                         <CardDescription>Member since October 1, 2023</CardDescription>
                                     </div>
