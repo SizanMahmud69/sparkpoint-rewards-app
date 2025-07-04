@@ -15,10 +15,11 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import type { PointTransaction, Withdrawal } from '@/lib/types';
+import type { PointTransaction, Withdrawal, User, PaymentMethod } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useUserPoints } from '@/context/UserPointsContext';
-import { getWithdrawals, saveWithdrawals, getUsers, getPointHistoryForUser, getPaymentMethods } from '@/lib/storage';
+import { getWithdrawals, saveWithdrawals, getUsers, getPointHistoryForUser, getPaymentMethods, saveUsers } from '@/lib/storage';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function WalletPage() {
   const { toast } = useToast();
@@ -26,12 +27,17 @@ export default function WalletPage() {
 
   const [withdrawalHistory, setWithdrawalHistory] = useState<Withdrawal[]>([]);
   const [pointHistory, setPointHistory] = useState<PointTransaction[]>([]);
-  const [allUsers, setAllUsers] = useState(getUsers());
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
     if (user) {
       setWithdrawalHistory(getWithdrawals().filter(w => w.userId === user.id));
       setPointHistory(getPointHistoryForUser(user.id));
+      setAllUsers(getUsers());
+      setPaymentMethods(getPaymentMethods().filter(m => m.enabled));
     }
   }, [user]);
 
@@ -123,13 +129,37 @@ export default function WalletPage() {
           </div>
 
           <div className="h-full">
-            <WithdrawalForm 
-              paymentMethods={getPaymentMethods().filter(m => m.enabled)}
-              minWithdrawalPoints={minWithdrawalPoints}
-              onHistoryClick={() => setIsWithdrawalHistoryDialogOpen(true)}
-              onSubmitRequest={handleWithdrawalRequest}
-              currentBalance={points}
-            />
+            {isClient ? (
+              <WithdrawalForm 
+                paymentMethods={paymentMethods}
+                minWithdrawalPoints={minWithdrawalPoints}
+                onHistoryClick={() => setIsWithdrawalHistoryDialogOpen(true)}
+                onSubmitRequest={handleWithdrawalRequest}
+                currentBalance={points}
+              />
+            ) : (
+               <Card className="shadow-lg flex flex-col h-full">
+                <CardHeader>
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-1/2 mt-2" />
+                </CardHeader>
+                <CardContent className="space-y-6 pt-6">
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-1/4" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                   <div className="space-y-2">
+                    <Skeleton className="h-4 w-1/4" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                   <div className="space-y-2">
+                    <Skeleton className="h-4 w-1/4" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                  <Skeleton className="h-10 w-full" />
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>
