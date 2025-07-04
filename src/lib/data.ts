@@ -1,28 +1,10 @@
 import type { User, Withdrawal, PointTransaction, Task, PaymentMethod, Notification } from './types';
 
-export const mockUsers: User[] = [
-  { id: 1, name: 'Alice Johnson', email: 'alice@example.com', points: 1250, registrationDate: '2023-10-01', status: 'Active', avatar: 'https://placehold.co/100x100.png', password: "password123" },
-  { id: 2, name: 'Bob Smith', email: 'bob@example.com', points: 780, registrationDate: '2023-10-05', status: 'Active', avatar: 'https://placehold.co/100x100.png', password: "password123" },
-  { id: 3, name: 'Charlie Brown', email: 'charlie@example.com', points: 2400, registrationDate: '2023-10-12', status: 'Suspended', avatar: 'https://placehold.co/100x100.png', password: "password123" },
-  { id: 4, name: 'Diana Prince', email: 'diana@example.com', points: 5600, registrationDate: '2023-09-15', status: 'Active', avatar: 'https://placehold.co/100x100.png', password: "password123" },
-  { id: 5, name: 'Ethan Hunt', email: 'ethan@example.com', points: 300, registrationDate: '2023-11-20', status: 'Active', avatar: 'https://placehold.co/100x100.png', password: "password123" },
-];
+export const mockUsers: User[] = [];
 
-export const mockWithdrawals: Withdrawal[] = [
-  { id: 1, userId: 1, userName: 'Alice Johnson', amountPoints: 1000, amountUSD: 1, method: 'বিকাশ', details: '01700000000', date: '2023-11-01 10:30 AM', status: 'Completed' },
-  { id: 2, userId: 3, userName: 'Charlie Brown', amountPoints: 2000, amountUSD: 2, method: 'Binance ID', details: '123456789', date: '2023-11-05 02:15 PM', status: 'Pending' },
-  { id: 3, userId: 2, userName: 'Bob Smith', amountPoints: 500, amountUSD: 0.5, method: 'নগদ', details: '01800000000', date: '2023-11-06 09:00 AM', status: 'Rejected' },
-  { id: 4, userId: 4, userName: 'Diana Prince', amountPoints: 5000, amountUSD: 5, method: 'USDT (TRC-20)', details: 'T...1234', date: '2023-11-20 11:00 AM', status: 'Completed' },
-  { id: 5, userId: 5, userName: 'Ethan Hunt', amountPoints: 3000, amountUSD: 3, method: 'বিকাশ', details: '01900000000', date: '2023-11-21 03:45 PM', status: 'Pending' },
-];
+export const mockWithdrawals: Withdrawal[] = [];
 
-export const mockPointHistory: PointTransaction[] = [
-    { id: 1, userId: 1, task: 'Registration Bonus', points: 50, date: '2023-10-01' },
-    { id: 2, userId: 1, task: 'Daily Login Reward', points: 20, date: '2023-11-10' },
-    { id: 3, userId: 1, task: 'Spin The Wheel', points: 15, date: '2023-11-09' },
-    { id: 4, userId: 1, task: 'Scratch & Win', points: 30, date: '2023-11-09' },
-    { id: 5, userId: 1, task: 'Withdrawal Request', points: -1000, date: '2023-11-01' },
-];
+export const mockPointHistory: PointTransaction[] = [];
 
 export const mockTasks: Task[] = [
   {
@@ -64,8 +46,4 @@ export const mockPaymentMethods: PaymentMethod[] = [
   { value: 'USDT (TRC-20)', label: 'USDT (TRC-20) Address', placeholder: 'e.g., T...', enabled: false },
 ];
 
-export const mockNotifications: Notification[] = [
-    { id: 1, userId: 1, title: 'Welcome to SparkPoint!', description: 'We are happy to have you here. Complete tasks to earn points.', type: 'info', read: true, date: '2023-10-01' },
-    { id: 2, userId: 1, title: 'Withdrawal Processed', description: 'Your withdrawal of 1000 points has been successfully processed.', type: 'success', read: false, date: '2023-11-01' },
-    { id: 3, userId: 1, title: 'Daily Tasks Reset', description: 'Your daily tasks are now available to complete again.', type: 'info', read: false, date: '2023-11-02' },
-];
+export const mockNotifications: Notification[] = [];
