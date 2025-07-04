@@ -19,28 +19,30 @@ export default function WalletPage() {
             <div className="space-y-8">
               <h1 className="text-3xl font-bold font-headline">My Wallet</h1>
               
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-1 space-y-6">
-                  <Card className="shadow-lg">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Coins className="h-6 w-6 text-primary"/>
-                        Current Balance
-                      </CardTitle>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                <div className="lg:col-span-1 space-y-8">
+                  <Card className="shadow-lg hover:shadow-xl transition-shadow">
+                    <CardHeader className="flex flex-row items-center gap-4 p-5">
+                       <div className="p-3 bg-primary/10 rounded-lg">
+                          <Coins className="h-8 w-8 text-primary"/>
+                       </div>
+                       <div>
+                          <p className="text-sm font-medium text-muted-foreground">Current Balance</p>
+                          <p className="text-2xl font-bold font-headline">1,250 Points</p>
+                       </div>
                     </CardHeader>
-                    <CardContent>
-                      <p className="text-4xl font-bold font-headline">1,250 <span className="text-xl font-medium text-muted-foreground">Points</span></p>
-                    </CardContent>
                   </Card>
-                  <Card className="shadow-lg bg-primary/10 border-primary/20">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <DollarSign className="h-6 w-6 text-primary"/>
-                        Point Value
-                      </CardTitle>
+                  <Card className="shadow-lg hover:shadow-xl transition-shadow bg-primary/5 border-primary/10">
+                    <CardHeader className="flex flex-row items-center gap-4 p-5">
+                      <div className="p-3 bg-primary/10 rounded-lg">
+                        <DollarSign className="h-8 w-8 text-primary"/>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Point Value</p>
+                        <p className="text-lg font-semibold">1,000 pts = $1 USD</p>
+                      </div>
                     </CardHeader>
-                    <CardContent>
-                      <p className="text-xl font-semibold">1,000 Points = $1 USD</p>
+                     <CardContent className="pt-0 px-5 pb-5">
                       <p className="text-muted-foreground text-sm">Your current balance is worth approximately $1.25</p>
                     </CardContent>
                   </Card>
