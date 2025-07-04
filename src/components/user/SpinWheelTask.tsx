@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Dices } from 'lucide-react';
+import { Dices, Timer } from 'lucide-react';
 
 const segments = [
     { color: '#a0c4ff', label: '10' },
@@ -19,13 +19,43 @@ const segments = [
 
 const conicGradient = `conic-gradient(from -22.5deg, ${segments.map((s, i) => `${s.color} ${i * 45}deg ${(i + 1) * 45}deg`).join(', ')})`;
 
+const taskKey = 'spin_wheel_cooldown';
+
 export function SpinWheelTask() {
     const { toast } = useToast();
     const [isSpinning, setIsSpinning] = useState(false);
     const [rotation, setRotation] = useState(0);
+    const [isCooldown, setIsCooldown] = useState(false);
+    const [timeLeft, setTimeLeft] = useState(0);
+
+    useEffect(() => {
+        const cooldownEnd = localStorage.getItem(taskKey);
+        if (cooldownEnd) {
+            const remaining = new Date(cooldownEnd).getTime() - new Date().getTime();
+            if (remaining > 0) {
+                setIsCooldown(true);
+                setTimeLeft(remaining);
+            } else {
+                localStorage.removeItem(taskKey);
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        if (timeLeft <= 0) {
+            if (isCooldown) localStorage.removeItem(taskKey);
+            setIsCooldown(false);
+            return;
+        }
+        const intervalId = setInterval(() => {
+            setTimeLeft(prevTime => prevTime - 1000);
+        }, 1000);
+        return () => clearInterval(intervalId);
+    }, [timeLeft, isCooldown]);
+
 
     const handleSpin = () => {
-        if (isSpinning) return;
+        if (isSpinning || isCooldown) return;
         setIsSpinning(true);
         const randomSpins = Math.floor(Math.random() * 5) + 5;
         const stopAngle = Math.floor(Math.random() * 360);
@@ -43,7 +73,20 @@ export function SpinWheelTask() {
                 description: `You won ${prize.label} points!`,
             });
             setIsSpinning(false);
+            
+            const cooldownDuration = 24 * 60 * 60 * 1000; // 24 hours
+            const cooldownEnd = new Date(new Date().getTime() + cooldownDuration);
+            localStorage.setItem(taskKey, cooldownEnd.toISOString());
+            setIsCooldown(true);
+            setTimeLeft(cooldownDuration);
         }, 5000); // Must match transition duration
+    };
+
+    const formatTime = (ms: number) => {
+        const hours = Math.floor(ms / (1000 * 60 * 60));
+        const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     };
 
     return (
@@ -97,8 +140,17 @@ export function SpinWheelTask() {
                     </div>
                 </div>
 
-                <Button onClick={handleSpin} disabled={isSpinning} size="lg" className="w-full max-w-sm bg-slate-800 hover:bg-slate-700 text-lg font-bold">
-                    {isSpinning ? 'Spinning...' : 'Spin for a Prize'}
+                <Button onClick={handleSpin} disabled={isSpinning || isCooldown} size="lg" className="w-full max-w-sm bg-slate-800 hover:bg-slate-700 text-lg font-bold">
+                    {isCooldown ? (
+                        <>
+                            <Timer className="mr-2 h-5 w-5" />
+                            {formatTime(timeLeft)}
+                        </>
+                    ) : isSpinning ? (
+                        'Spinning...'
+                    ) : (
+                        'Spin for a Prize'
+                    )}
                 </Button>
             </Card>
         </div>
