@@ -2,7 +2,7 @@
 'use client';
 
 import type { User } from './types';
-import { getUsers, saveUsers } from './storage';
+import { getUsers, saveUsers, addPointTransaction } from './storage';
 
 const LOGGED_IN_USER_KEY = 'sparkpoint_logged_in_user';
 
@@ -33,6 +33,13 @@ export const registerUser = (name: string, email: string, password: string): { s
   };
 
   saveUsers([...users, newUser]);
+
+  addPointTransaction({
+    userId: newUser.id,
+    task: 'Registration Bonus',
+    points: 50,
+    date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+  });
   
   return { success: true, message: 'Registration successful!', user: newUser };
 };
