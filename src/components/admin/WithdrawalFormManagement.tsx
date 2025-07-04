@@ -7,12 +7,26 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import type { PaymentMethod } from '@/lib/types';
 import { Button } from '../ui/button';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Trash2 } from 'lucide-react';
 import { AddPaymentMethodDialog } from './AddPaymentMethodDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from '@/hooks/use-toast';
 
 export function WithdrawalFormManagement({ initialMethods }: { initialMethods: PaymentMethod[] }) {
   const [methods, setMethods] = React.useState(initialMethods);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const [isAlertOpen, setIsAlertOpen] = React.useState(false);
+  const [methodToDelete, setMethodToDelete] = React.useState<PaymentMethod | null>(null);
+  const { toast } = useToast();
 
   const handleEnabledChange = (value: string, enabled: boolean) => {
     // In a real app, you'd make an API call here.
@@ -24,6 +38,24 @@ export function WithdrawalFormManagement({ initialMethods }: { initialMethods: P
     setMethods(prevMethods => [...prevMethods, newMethod]);
   };
 
+  const openDeleteConfirm = (method: PaymentMethod) => {
+    setMethodToDelete(method);
+    setIsAlertOpen(true);
+  };
+
+  const handleDeleteMethod = () => {
+    if (!methodToDelete) return;
+    // In a real app, you'd make an API call here to delete the method.
+    setMethods(methods.filter(method => method.value !== methodToDelete.value));
+    toast({
+      title: 'Method Deleted',
+      description: `The "${methodToDelete.value}" payment method has been removed.`,
+      variant: 'destructive'
+    });
+    setIsAlertOpen(false);
+    setMethodToDelete(null);
+  };
+
   return (
     <>
       <Card>
@@ -31,7 +63,7 @@ export function WithdrawalFormManagement({ initialMethods }: { initialMethods: P
           <div className="flex justify-between items-center">
             <div>
               <CardTitle>Withdrawal Method Management</CardTitle>
-              <CardDescription>Enable or disable payment methods available to users.</CardDescription>
+              <CardDescription>Enable, disable, or delete payment methods available to users.</CardDescription>
             </div>
             <Button onClick={() => setIsDialogOpen(true)}>
               <PlusCircle className="mr-2 h-4 w-4" />
@@ -45,8 +77,9 @@ export function WithdrawalFormManagement({ initialMethods }: { initialMethods: P
               <TableRow>
                 <TableHead>Method</TableHead>
                 <TableHead>Input Label</TableHead>
-                <TableHead>Input Placeholder</TableHead>
-                <TableHead className="text-right">Status</TableHead>
+                <TableHead className="hidden sm:table-cell">Input Placeholder</TableHead>
+                <TableHead className="text-center">Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -54,9 +87,9 @@ export function WithdrawalFormManagement({ initialMethods }: { initialMethods: P
                 <TableRow key={method.value}>
                   <TableCell className="font-medium">{method.value}</TableCell>
                   <TableCell className="text-muted-foreground">{method.label}</TableCell>
-                  <TableCell className="text-muted-foreground">{method.placeholder}</TableCell>
+                  <TableCell className="text-muted-foreground hidden sm:table-cell">{method.placeholder}</TableCell>
                   <TableCell>
-                    <div className="flex items-center justify-end space-x-3">
+                    <div className="flex items-center justify-center space-x-3">
                       <Badge variant={method.enabled ? 'default' : 'secondary'} className="capitalize w-[80px] justify-center">
                         {method.enabled ? 'Enabled' : 'Disabled'}
                       </Badge>
@@ -66,6 +99,12 @@ export function WithdrawalFormManagement({ initialMethods }: { initialMethods: P
                         aria-label={`Toggle ${method.label}`}
                       />
                     </div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="icon" onClick={() => openDeleteConfirm(method)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                        <span className="sr-only">Delete Method</span>
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -78,6 +117,24 @@ export function WithdrawalFormManagement({ initialMethods }: { initialMethods: P
         onOpenChange={setIsDialogOpen}
         onAddMethod={handleAddMethod}
       />
+      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the 
+              <span className="font-bold"> {methodToDelete?.value} </span> 
+              payment method.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setMethodToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteMethod} className="bg-destructive hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
