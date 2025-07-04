@@ -25,6 +25,17 @@ import { Badge } from '../ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { AddUserDialog } from './AddUserDialog';
 import { getUsers, saveUsers } from '@/lib/storage';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const getStatusBadgeVariant = (status: User['status']): "default" | "destructive" => {
   switch (status) {
@@ -43,12 +54,42 @@ interface UserTableProps {
 export function UserTable({ users, onUsersUpdate }: UserTableProps) {
   const [searchTerm, setSearchTerm] = React.useState('');
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = React.useState(false);
+  const [isAlertOpen, setIsAlertOpen] = React.useState(false);
+  const [userToDelete, setUserToDelete] = React.useState<User | null>(null);
+  const { toast } = useToast();
 
   const handleStatusChange = (id: number, newStatus: User['status']) => {
     const currentUsers = getUsers();
+    const user = currentUsers.find(u => u.id === id);
+    if (!user) return;
+
     const updatedUsers = currentUsers.map(u => u.id === id ? { ...u, status: newStatus } : u);
     saveUsers(updatedUsers);
+    toast({
+      title: `User ${newStatus}`,
+      description: `User "${user.name}" has been ${newStatus.toLowerCase()}.`
+    });
     onUsersUpdate();
+  };
+
+  const openDeleteConfirm = (user: User) => {
+    setUserToDelete(user);
+    setIsAlertOpen(true);
+  };
+
+  const handleDeleteUser = () => {
+    if (!userToDelete) return;
+    const currentUsers = getUsers();
+    const updatedUsers = currentUsers.filter(u => u.id !== userToDelete.id);
+    saveUsers(updatedUsers);
+    toast({
+        title: "User Deleted",
+        description: `User "${userToDelete.name}" has been permanently removed.`,
+        variant: "destructive"
+    });
+    onUsersUpdate();
+    setIsAlertOpen(false);
+    setUserToDelete(null);
   };
 
   const handleAddUser = (newUser: Omit<User, 'id' | 'registrationDate' | 'avatar'>) => {
@@ -143,7 +184,7 @@ export function UserTable({ users, onUsersUpdate }: UserTableProps) {
                             Activate User
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem className="text-destructive">Delete User</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => openDeleteConfirm(user)}>Delete User</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -158,6 +199,23 @@ export function UserTable({ users, onUsersUpdate }: UserTableProps) {
         onOpenChange={setIsAddUserDialogOpen}
         onAddUser={handleAddUser}
       />
+      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the user account
+              for <span className="font-bold">{userToDelete?.name}</span> and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setUserToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteUser} className="bg-destructive hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
