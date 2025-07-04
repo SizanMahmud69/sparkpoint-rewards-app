@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { UserHeader } from "@/components/user/UserHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PointsHistoryTable } from "@/components/user/PointsHistoryTable";
 import { WithdrawalForm } from "@/components/user/WithdrawalForm";
 import { mockPointHistory, mockWithdrawals } from "@/lib/data";
@@ -19,8 +18,8 @@ import {
 } from '@/components/ui/dialog';
 
 export default function WalletPage() {
-  const [activeTab, setActiveTab] = useState('withdraw');
-  const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
+  const [isPointsHistoryDialogOpen, setIsPointsHistoryDialogOpen] = useState(false);
+  const [isWithdrawalHistoryDialogOpen, setIsWithdrawalHistoryDialogOpen] = useState(false);
   const userWithdrawals = mockWithdrawals.filter(w => w.userId === 1 || w.userId === 2 || w.userId === 3);
   const minWithdrawalPoints = 1000; // This would be fetched from settings in a real app
 
@@ -47,7 +46,7 @@ export default function WalletPage() {
                     </CardHeader>
                     <CardContent className="flex-grow p-0" />
                     <CardFooter className="p-5 pt-0">
-                      <Button variant="outline" className="w-full" onClick={() => setIsHistoryDialogOpen(true)}>
+                      <Button variant="outline" className="w-full" onClick={() => setIsPointsHistoryDialogOpen(true)}>
                           <History className="mr-2 h-4 w-4" />
                           View History
                       </Button>
@@ -69,26 +68,18 @@ export default function WalletPage() {
                   </Card>
                 </div>
 
-                <div>
-                  <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="withdraw">Withdraw Points</TabsTrigger>
-                      <TabsTrigger value="withdrawal-history">Withdrawal History</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="withdraw">
-                      <WithdrawalForm minWithdrawalPoints={minWithdrawalPoints} />
-                    </TabsContent>
-                     <TabsContent value="withdrawal-history">
-                        <WithdrawalTable withdrawals={userWithdrawals} />
-                    </TabsContent>
-                  </Tabs>
+                <div className="h-full">
+                  <WithdrawalForm 
+                    minWithdrawalPoints={minWithdrawalPoints}
+                    onHistoryClick={() => setIsWithdrawalHistoryDialogOpen(true)}
+                  />
                 </div>
               </div>
             </div>
           </div>
       </main>
 
-      <Dialog open={isHistoryDialogOpen} onOpenChange={setIsHistoryDialogOpen}>
+      <Dialog open={isPointsHistoryDialogOpen} onOpenChange={setIsPointsHistoryDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Points History</DialogTitle>
@@ -98,6 +89,20 @@ export default function WalletPage() {
           </DialogHeader>
           <div className="max-h-[60vh] overflow-y-auto pr-4">
             <PointsHistoryTable transactions={mockPointHistory} />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isWithdrawalHistoryDialogOpen} onOpenChange={setIsWithdrawalHistoryDialogOpen}>
+        <DialogContent className="sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Withdrawal History</DialogTitle>
+            <DialogDescription>
+              A log of all your withdrawal requests.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-y-auto pr-4">
+            <WithdrawalTable withdrawals={userWithdrawals} />
           </div>
         </DialogContent>
       </Dialog>

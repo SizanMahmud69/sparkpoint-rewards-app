@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { mockPaymentMethods } from '@/lib/data';
 import type { PaymentMethod } from '@/lib/types';
+import { History } from 'lucide-react';
 
 const createWithdrawalSchema = (minPoints: number) => z.object({
   points: z.coerce.number().min(minPoints, { message: `Minimum withdrawal is ${minPoints} points.` }),
@@ -19,7 +20,7 @@ const createWithdrawalSchema = (minPoints: number) => z.object({
   details: z.string().min(1, { message: 'Withdrawal details are required.' }),
 });
 
-export function WithdrawalForm({ minWithdrawalPoints = 1000 }: { minWithdrawalPoints?: number }) {
+export function WithdrawalForm({ minWithdrawalPoints = 1000, onHistoryClick }: { minWithdrawalPoints?: number, onHistoryClick: () => void }) {
   const paymentMethods = mockPaymentMethods.filter(m => m.enabled);
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(paymentMethods[0] || {} as PaymentMethod);
   const { toast } = useToast();
@@ -47,12 +48,12 @@ export function WithdrawalForm({ minWithdrawalPoints = 1000 }: { minWithdrawalPo
   };
 
   return (
-    <Card className="shadow-lg">
+    <Card className="shadow-lg flex flex-col h-full">
       <CardHeader>
         <CardTitle>Withdraw Your Points</CardTitle>
         <CardDescription>{`1000 points = $1 USD. Minimum withdrawal is ${minWithdrawalPoints} points.`}</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-grow">
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -90,6 +91,12 @@ export function WithdrawalForm({ minWithdrawalPoints = 1000 }: { minWithdrawalPo
           </Button>
         </form>
       </CardContent>
+      <CardFooter className="border-t p-4 mt-auto">
+         <Button variant="outline" className="w-full" onClick={onHistoryClick}>
+            <History className="mr-2 h-4 w-4" />
+            View Withdrawal History
+        </Button>
+      </CardFooter>
     </Card>
   );
 }
