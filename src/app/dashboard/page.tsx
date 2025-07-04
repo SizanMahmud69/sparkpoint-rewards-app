@@ -3,9 +3,13 @@ import { Gift, Coins, Trophy } from 'lucide-react';
 import { mockTasks } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { SpinWheelTask } from '@/components/user/SpinWheelTask';
 
 export default function DashboardPage() {
   const enabledTasks = mockTasks.filter(task => task.enabled);
+  const spinWheelTask = enabledTasks.find(task => task.title === 'Spin the Wheel');
+  const otherTasks = enabledTasks.filter(task => task.title !== 'Spin the Wheel');
+
 
   return (
     <div className="space-y-8">
@@ -41,8 +45,13 @@ export default function DashboardPage() {
       {/* Available Tasks Section */}
       <div>
         <h2 className="text-2xl font-bold font-headline mb-4">Available Tasks</h2>
+        {spinWheelTask && (
+          <div className="mb-6">
+            <SpinWheelTask />
+          </div>
+        )}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {enabledTasks.map((task) => (
+          {otherTasks.map((task) => (
             <TaskCard key={task.id} {...task} />
           ))}
         </div>

@@ -46,12 +46,12 @@ export const mockTasks: Task[] = [
   },
   {
     id: 4,
-    title: 'Spin The Wheel',
-    description: 'Spin the wheel for a chance to win big.',
-    points: '5/8/10/15/20',
-    icon: 'RotateCw',
+    title: 'Spin the Wheel',
+    description: 'Try your luck to win big rewards!',
+    points: 'Varies',
+    icon: 'Dices',
     color: 'bg-purple-500',
-    actionText: 'Spin Wheel',
+    actionText: 'Spin for a Prize',
     enabled: true,
   },
 ];
