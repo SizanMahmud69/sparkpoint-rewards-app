@@ -4,9 +4,17 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Users, CreditCard, LogOut } from 'lucide-react';
 import { Logo } from '@/components/Logo';
-import { cn } from '@/lib/utils';
-import { Button } from '../ui/button';
-import { Separator } from '../ui/separator';
+import { 
+  SidebarContent, 
+  SidebarFooter, 
+  SidebarHeader, 
+  SidebarMenu, 
+  SidebarMenuItem, 
+  SidebarMenuButton,
+  SidebarSeparator,
+  SidebarTrigger,
+  useSidebar
+} from '../ui/sidebar';
 
 const navItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: Home },
@@ -16,39 +24,56 @@ const navItems = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const { state } = useSidebar();
 
   return (
-    <aside className="w-64 flex-shrink-0 bg-sidebar text-sidebar-foreground flex flex-col">
-       <div className="p-4">
-        <Link href="/admin/dashboard">
-          <Logo />
+    <>
+      <SidebarHeader className="p-4">
+        <div className="flex items-center justify-between">
+            <div className={state === 'collapsed' ? 'hidden' : ''}>
+                <Link href="/admin/dashboard">
+                    <Logo />
+                </Link>
+            </div>
+            <SidebarTrigger className="hidden sm:flex" />
+        </div>
+      </SidebarHeader>
+      
+      <SidebarSeparator />
+
+      <SidebarContent>
+        <SidebarMenu>
+          {navItems.map((item) => (
+            <SidebarMenuItem key={item.label}>
+              <Link href={item.href} legacyBehavior passHref>
+                <SidebarMenuButton 
+                  isActive={pathname === item.href}
+                  tooltip={{children: item.label}}
+                  asChild
+                >
+                  <a>
+                    <item.icon />
+                    <span>{item.label}</span>
+                  </a>
+                </SidebarMenuButton>
+              </Link>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarContent>
+
+      <SidebarSeparator />
+
+      <SidebarFooter className="p-2">
+        <Link href="/" legacyBehavior passHref>
+            <SidebarMenuButton tooltip={{children: "Logout"}} asChild>
+                <a>
+                    <LogOut />
+                    <span>Logout</span>
+                </a>
+            </SidebarMenuButton>
         </Link>
-      </div>
-      <Separator className='bg-sidebar-border/50'/>
-      <nav className="flex-1 px-4 py-4 space-y-2">
-        {navItems.map((item) => (
-          <Link
-            key={item.label}
-            href={item.href}
-            className={cn(
-              'flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-              pathname === item.href ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''
-            )}
-          >
-            <item.icon className="h-4 w-4" />
-            <span>{item.label}</span>
-          </Link>
-        ))}
-      </nav>
-      <div className="mt-auto p-4">
-        <Separator className='bg-sidebar-border/50 mb-4'/>
-        <Link href="/">
-           <Button variant="ghost" className="w-full justify-start gap-3">
-             <LogOut className="h-4 w-4" />
-             <span>Logout</span>
-           </Button>
-        </Link>
-      </div>
-    </aside>
+      </SidebarFooter>
+    </>
   );
 }
