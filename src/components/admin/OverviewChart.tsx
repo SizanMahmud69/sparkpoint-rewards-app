@@ -1,24 +1,31 @@
 "use client"
 
+import * as React from 'react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 
-const data = [
-  { name: "Jan", total: Math.floor(Math.random() * 200) + 50 },
-  { name: "Feb", total: Math.floor(Math.random() * 200) + 100 },
-  { name: "Mar", total: Math.floor(Math.random() * 200) + 150 },
-  { name: "Apr", total: Math.floor(Math.random() * 200) + 200 },
-  { name: "May", total: Math.floor(Math.random() * 200) + 250 },
-  { name: "Jun", total: Math.floor(Math.random() * 200) + 300 },
-  { name: "Jul", total: Math.floor(Math.random() * 200) + 350 },
-  { name: "Aug", total: Math.floor(Math.random() * 200) + 400 },
-  { name: "Sep", total: Math.floor(Math.random() * 200) + 380 },
-  { name: "Oct", total: Math.floor(Math.random() * 200) + 420 },
-  { name: "Nov", total: Math.floor(Math.random() * 200) + 450 },
-  { name: "Dec", total: Math.floor(Math.random() * 200) + 500 },
-]
-
 export function OverviewChart() {
+  const [data, setData] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    const generatedData = [
+      { name: "Jan", total: Math.floor(Math.random() * 200) + 50 },
+      { name: "Feb", total: Math.floor(Math.random() * 200) + 100 },
+      { name: "Mar", total: Math.floor(Math.random() * 200) + 150 },
+      { name: "Apr", total: Math.floor(Math.random() * 200) + 200 },
+      { name: "May", total: Math.floor(Math.random() * 200) + 250 },
+      { name: "Jun", total: Math.floor(Math.random() * 200) + 300 },
+      { name: "Jul", total: Math.floor(Math.random() * 200) + 350 },
+      { name: "Aug", total: Math.floor(Math.random() * 200) + 400 },
+      { name: "Sep", total: Math.floor(Math.random() * 200) + 380 },
+      { name: "Oct", total: Math.floor(Math.random() * 200) + 420 },
+      { name: "Nov", total: Math.floor(Math.random() * 200) + 450 },
+      { name: "Dec", total: Math.floor(Math.random() * 200) + 500 },
+    ];
+    setData(generatedData);
+  }, []);
+
+
   return (
     <Card className="h-full flex flex-col shadow-sm">
       <CardHeader>
