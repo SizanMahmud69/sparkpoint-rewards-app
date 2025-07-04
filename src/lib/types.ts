@@ -40,6 +40,7 @@ export type Task = {
   color: string;
   actionText: string;
   enabled: boolean;
+  limitPerDay: number;
 };
 
 export type PaymentMethod = {

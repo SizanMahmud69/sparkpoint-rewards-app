@@ -23,48 +23,74 @@ const iconMap: { [key: string]: React.ComponentType<LucideProps> } = {
 
 type TaskCardProps = Task;
 
-export function TaskCard({ id, title, description, points, icon, color, actionText }: TaskCardProps) {
+export function TaskCard({ id, title, description, points, icon, color, actionText, limitPerDay }: TaskCardProps) {
   const { toast } = useToast();
   const { user, updatePoints: contextUpdatePoints } = useUserPoints();
   const [isDisabled, setIsDisabled] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [earnedPoints, setEarnedPoints] = useState<number | null>(null);
+  const [completions, setCompletions] = useState(0);
 
-  const taskKey = user ? `task_cooldown_${user.id}_${id}` : null;
-  const pointsKey = user ? `task_last_points_${user.id}_${id}` : null;
+  const taskUsageKey = user ? `task_usage_${user.id}_${id}` : null;
+  const lastPointsKey = user ? `task_last_points_${user.id}_${id}` : null;
 
   const Icon = iconMap[icon] || Gift;
 
   useEffect(() => {
-    if (!taskKey || !pointsKey) return;
+    if (!taskUsageKey || !lastPointsKey) return;
+    
+    const usageDataString = localStorage.getItem(taskUsageKey);
+    const lastPoints = localStorage.getItem(lastPointsKey);
 
-    const cooldownEnd = localStorage.getItem(taskKey);
-    const lastPoints = localStorage.getItem(pointsKey);
+    if (usageDataString) {
+        try {
+            const usageData = JSON.parse(usageDataString);
+            const firstCompletionTime = new Date(usageData.firstCompletionTimestamp).getTime();
+            const now = new Date().getTime();
+            const twentyFourHours = 24 * 60 * 60 * 1000;
 
-    if (cooldownEnd) {
-      const remaining = new Date(cooldownEnd).getTime() - new Date().getTime();
-      if (remaining > 0) {
-        setIsDisabled(true);
-        setTimeLeft(remaining);
-        if (lastPoints) {
-          setEarnedPoints(parseInt(lastPoints, 10));
+            if (now - firstCompletionTime > twentyFourHours) {
+                // Cooldown expired
+                localStorage.removeItem(taskUsageKey);
+                localStorage.removeItem(lastPointsKey);
+                setIsDisabled(false);
+                setCompletions(0);
+                setTimeLeft(0);
+                setEarnedPoints(null);
+            } else {
+                // Still in cooldown period
+                setCompletions(usageData.count);
+                if (usageData.count >= limitPerDay) {
+                    setIsDisabled(true);
+                    setTimeLeft(twentyFourHours - (now - firstCompletionTime));
+                    if (lastPoints) {
+                        setEarnedPoints(parseInt(lastPoints, 10));
+                    }
+                } else {
+                     setIsDisabled(false);
+                     setEarnedPoints(null);
+                }
+            }
+        } catch (error) {
+            console.error("Error parsing task usage data:", error);
+            localStorage.removeItem(taskUsageKey);
+            localStorage.removeItem(lastPointsKey);
         }
-      } else {
-        localStorage.removeItem(taskKey);
-        localStorage.removeItem(pointsKey);
-        setIsDisabled(false);
-        setEarnedPoints(null);
-      }
+    } else {
+      setIsDisabled(false);
+      setCompletions(0);
+      setEarnedPoints(null);
     }
-  }, [taskKey, pointsKey]);
+  }, [taskUsageKey, lastPointsKey, limitPerDay]);
 
   useEffect(() => {
-    if (!taskKey || !pointsKey || timeLeft <= 0) {
-      if (isDisabled) {
-        localStorage.removeItem(taskKey);
-        localStorage.removeItem(pointsKey);
+    if (!isDisabled || timeLeft <= 0) {
+      if (isDisabled && timeLeft <= 0) {
+        localStorage.removeItem(taskUsageKey);
+        localStorage.removeItem(lastPointsKey);
         setEarnedPoints(null);
         setIsDisabled(false);
+        setCompletions(0);
       }
       return;
     }
@@ -79,10 +105,10 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
     }, 1000);
 
     return () => clearInterval(intervalId);
-  }, [timeLeft, isDisabled, taskKey, pointsKey]);
+  }, [timeLeft, isDisabled, taskUsageKey, lastPointsKey]);
 
   const handleTaskComplete = async () => {
-    if (!user || !taskKey || !pointsKey) return;
+    if (!user || !taskUsageKey || !lastPointsKey) return;
     
     let possiblePoints: number[];
     if (points.includes('/')) {
@@ -109,14 +135,32 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
       title: 'Task Complete!',
       description: `You earned ${finalEarnedPoints} points from ${title}.`,
     });
+    
+    const usageDataString = localStorage.getItem(taskUsageKey);
+    let newCount = 1;
+    let newUsageData;
 
-    const cooldownDuration = 24 * 60 * 60 * 1000; // 24 hours
-    const cooldownEnd = new Date(new Date().getTime() + cooldownDuration);
-    localStorage.setItem(taskKey, cooldownEnd.toISOString());
-    localStorage.setItem(pointsKey, String(finalEarnedPoints));
+    if (usageDataString) {
+        const usageData = JSON.parse(usageDataString);
+        newCount = usageData.count + 1;
+        newUsageData = { ...usageData, count: newCount };
+    } else {
+        newUsageData = {
+            count: 1,
+            firstCompletionTimestamp: new Date().toISOString()
+        };
+    }
+    
+    localStorage.setItem(taskUsageKey, JSON.stringify(newUsageData));
+    localStorage.setItem(lastPointsKey, String(finalEarnedPoints));
     setEarnedPoints(finalEarnedPoints);
-    setIsDisabled(true);
-    setTimeLeft(cooldownDuration);
+    setCompletions(newCount);
+
+    if (newCount >= limitPerDay) {
+        setIsDisabled(true);
+        const twentyFourHours = 24 * 60 * 60 * 1000;
+        setTimeLeft(twentyFourHours);
+    }
   };
 
   const formatTime = (ms: number) => {
@@ -135,7 +179,7 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
             color,
             "text-white"
         )}>
-            {earnedPoints !== null ? (
+            {earnedPoints !== null && isDisabled ? (
                 <div className="flex-grow flex flex-col justify-center items-center">
                     <p className="text-white/80 text-lg">You earned</p>
                     <p className="font-headline text-6xl font-bold">{earnedPoints}</p>

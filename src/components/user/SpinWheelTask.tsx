@@ -29,50 +29,70 @@ export function SpinWheelTask({ task }: { task: Task }) {
     const { toast } = useToast();
     const [isSpinning, setIsSpinning] = useState(false);
     const [rotation, setRotation] = useState(0);
-    const [isCooldown, setIsCooldown] = useState(false);
+    const [isDisabled, setIsDisabled] = useState(false);
     const [timeLeft, setTimeLeft] = useState(0);
-    
-    const taskKey = user ? `spin_wheel_cooldown_${user.id}` : null;
+    const [completions, setCompletions] = useState(0);
+
+    const taskUsageKey = user ? `task_usage_${user.id}_${task.id}` : null;
 
     useEffect(() => {
-        if (!taskKey) return;
-        const cooldownEnd = localStorage.getItem(taskKey);
-        if (cooldownEnd) {
-            const remaining = new Date(cooldownEnd).getTime() - new Date().getTime();
-            if (remaining > 0) {
-                setIsCooldown(true);
-                setTimeLeft(remaining);
-            } else {
-                localStorage.removeItem(taskKey);
-                setIsCooldown(false);
+        if (!taskUsageKey) return;
+
+        const usageDataString = localStorage.getItem(taskUsageKey);
+        if (usageDataString) {
+            try {
+                const usageData = JSON.parse(usageDataString);
+                const firstCompletionTime = new Date(usageData.firstCompletionTimestamp).getTime();
+                const now = new Date().getTime();
+                const twentyFourHours = 24 * 60 * 60 * 1000;
+
+                if (now - firstCompletionTime > twentyFourHours) {
+                    localStorage.removeItem(taskUsageKey);
+                    setIsDisabled(false);
+                    setCompletions(0);
+                    setTimeLeft(0);
+                } else {
+                    setCompletions(usageData.count);
+                    if (usageData.count >= task.limitPerDay) {
+                        setIsDisabled(true);
+                        setTimeLeft(twentyFourHours - (now - firstCompletionTime));
+                    } else {
+                        setIsDisabled(false);
+                    }
+                }
+            } catch (error) {
+                console.error("Error parsing task usage data:", error);
+                localStorage.removeItem(taskUsageKey);
             }
+        } else {
+            setIsDisabled(false);
+            setCompletions(0);
         }
-    }, [taskKey]);
+    }, [taskUsageKey, task.limitPerDay]);
 
-    useEffect(() => {
-        if (!taskKey || timeLeft <= 0) {
-            if (isCooldown) {
-                localStorage.removeItem(taskKey);
-                setIsCooldown(false);
+     useEffect(() => {
+        if (!isDisabled || timeLeft <= 0) {
+            if (isDisabled && timeLeft <=0) {
+                 localStorage.removeItem(taskUsageKey);
+                 setIsDisabled(false);
+                 setCompletions(0);
             }
             return;
         }
 
         const intervalId = setInterval(() => {
             setTimeLeft(prevTime => {
-                if (prevTime <= 1000) {
-                    return 0;
-                }
+                if (prevTime <= 1000) return 0;
                 return prevTime - 1000;
             });
         }, 1000);
         
         return () => clearInterval(intervalId);
-    }, [timeLeft, isCooldown, taskKey]);
+    }, [timeLeft, isDisabled, taskUsageKey]);
 
 
     const handleSpin = () => {
-        if (isSpinning || isCooldown || !user || !taskKey) return;
+        if (isSpinning || isDisabled || !user || !taskUsageKey) return;
         setIsSpinning(true);
         const randomSpins = Math.floor(Math.random() * 5) + 5;
         const stopAngle = Math.floor(Math.random() * 360);
@@ -100,11 +120,30 @@ export function SpinWheelTask({ task }: { task: Task }) {
             });
             setIsSpinning(false);
             
-            const cooldownDuration = 24 * 60 * 60 * 1000; // 24 hours
-            const cooldownEnd = new Date(new Date().getTime() + cooldownDuration);
-            localStorage.setItem(taskKey, cooldownEnd.toISOString());
-            setIsCooldown(true);
-            setTimeLeft(cooldownDuration);
+            const usageDataString = localStorage.getItem(taskUsageKey);
+            let newCount = 1;
+            let newUsageData;
+
+            if (usageDataString) {
+                const usageData = JSON.parse(usageDataString);
+                newCount = usageData.count + 1;
+                newUsageData = { ...usageData, count: newCount };
+            } else {
+                newUsageData = {
+                    count: 1,
+                    firstCompletionTimestamp: new Date().toISOString()
+                };
+            }
+            
+            localStorage.setItem(taskUsageKey, JSON.stringify(newUsageData));
+            setCompletions(newCount);
+
+            if (newCount >= task.limitPerDay) {
+                setIsDisabled(true);
+                const twentyFourHours = 24 * 60 * 60 * 1000;
+                setTimeLeft(twentyFourHours);
+            }
+
         }, 5000); // Must match transition duration
     };
 
@@ -170,8 +209,8 @@ export function SpinWheelTask({ task }: { task: Task }) {
                 </div>
                 
                 <div className="w-full pt-1">
-                    <Button onClick={handleSpin} disabled={isSpinning || isCooldown} className="w-full bg-white text-primary font-bold hover:bg-white/90">
-                        {isCooldown ? (
+                    <Button onClick={handleSpin} disabled={isSpinning || isDisabled} className="w-full bg-white text-primary font-bold hover:bg-white/90">
+                        {isDisabled ? (
                             <span className="flex items-center">
                                 <Timer className="mr-2 h-4 w-4" />
                                 {formatTime(timeLeft)}

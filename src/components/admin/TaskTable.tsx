@@ -54,13 +54,8 @@ export function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
   const [taskToDelete, setTaskToDelete] = React.useState<Task | null>(null);
   const { toast } = useToast();
 
-  const handleEnabledChange = async (id: string, enabled: boolean) => {
-    await updateTask(id, { enabled });
-    onTaskUpdate();
-  };
-
-  const handlePointsChange = async (id: string, points: string) => {
-    await updateTask(id, { points });
+  const handleTaskUpdate = async (id: string, data: Partial<Task>) => {
+    await updateTask(id, data);
     onTaskUpdate();
   };
 
@@ -110,6 +105,7 @@ export function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
                 <TableHead className="w-[250px]">Task</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead className="w-[180px]">Points</TableHead>
+                <TableHead className="w-[120px]">Daily Limit</TableHead>
                 <TableHead className="text-center w-[150px]">Status</TableHead>
                 <TableHead className="text-right w-[80px]">Actions</TableHead>
               </TableRow>
@@ -136,11 +132,21 @@ export function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
                       <Input 
                         type="text" 
                         defaultValue={task.points}
-                        onBlur={(e) => handlePointsChange(task.id, e.target.value)}
+                        onBlur={(e) => handleTaskUpdate(task.id, { points: e.target.value })}
                         className="max-w-[150px] pl-8"
                         aria-label={`Points for ${task.title}`}
                       />
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    <Input 
+                      type="number" 
+                      defaultValue={task.limitPerDay}
+                      onBlur={(e) => handleTaskUpdate(task.id, { limitPerDay: Number(e.target.value) })}
+                      className="max-w-[100px]"
+                      aria-label={`Daily limit for ${task.title}`}
+                      min="1"
+                    />
                   </TableCell>
                   <TableCell className="text-center">
                     <div className="flex items-center justify-center space-x-3">
@@ -150,7 +156,7 @@ export function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
                       <Switch
                         id={`task-switch-${task.id}`}
                         checked={task.enabled}
-                        onCheckedChange={(checked) => handleEnabledChange(task.id, checked)}
+                        onCheckedChange={(checked) => handleTaskUpdate(task.id, { enabled: checked })}
                         aria-label={`Toggle ${task.title}`}
                       />
                     </div>

@@ -28,6 +28,7 @@ const taskSchema = z.object({
   icon: z.string().min(1, "Lucide icon name is required."),
   color: z.string().min(1, "Tailwind color class is required (e.g., bg-blue-500)."),
   actionText: z.string().min(1, "Action text is required."),
+  limitPerDay: z.coerce.number().min(1, "Daily limit must be at least 1."),
 });
 
 type TaskFormValues = z.infer<typeof taskSchema>;
@@ -49,6 +50,7 @@ export function AddTaskDialog({ open, onOpenChange, onAddTask }: AddTaskDialogPr
       icon: 'Gift', // Default icon suggestion
       color: 'bg-green-500', // Default color suggestion
       actionText: 'Complete Task',
+      limitPerDay: 1,
     },
   });
 
@@ -106,6 +108,11 @@ export function AddTaskDialog({ open, onOpenChange, onAddTask }: AddTaskDialogPr
               {form.formState.errors.color && <p className="text-sm text-destructive mt-1">{form.formState.errors.color.message}</p>}
             </div>
           </div>
+          <div className="space-y-2">
+              <Label htmlFor="limitPerDay">Daily Limit</Label>
+              <Input id="limitPerDay" type="number" min="1" {...form.register('limitPerDay')} placeholder="e.g., 1" />
+              {form.formState.errors.limitPerDay && <p className="text-sm text-destructive mt-1">{form.formState.errors.limitPerDay.message}</p>}
+            </div>
         </form>
         <DialogFooter>
           <DialogClose asChild>
