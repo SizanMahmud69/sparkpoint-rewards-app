@@ -25,8 +25,6 @@ export default function AdminWithdrawalsPage() {
     refreshData();
   }, []);
 
-  const initialMinWithdrawal = 1000;
-
   const handleStatusChange = (id: number, newStatus: Withdrawal['status']) => {
     const currentWithdrawals = getWithdrawals();
     const withdrawal = currentWithdrawals.find(w => w.id === id);
@@ -79,7 +77,7 @@ export default function AdminWithdrawalsPage() {
           />
         </div>
         <div className="xl:col-span-1">
-          <WithdrawalSettings initialMinWithdrawal={initialMinWithdrawal} />
+          <WithdrawalSettings />
         </div>
       </div>
       

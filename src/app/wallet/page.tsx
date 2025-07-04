@@ -18,7 +18,7 @@ import {
 import type { PointTransaction, Withdrawal, User, PaymentMethod } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useUserPoints } from '@/context/UserPointsContext';
-import { getWithdrawals, saveWithdrawals, getUsers, getPointHistoryForUser, getPaymentMethods, saveUsers, addPointTransaction } from '@/lib/storage';
+import { getWithdrawals, saveWithdrawals, getUsers, getPointHistoryForUser, getPaymentMethods, saveUsers, addPointTransaction, getMinWithdrawal } from '@/lib/storage';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function WalletPage() {
@@ -29,6 +29,7 @@ export default function WalletPage() {
   const [pointHistory, setPointHistory] = useState<PointTransaction[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [minWithdrawalPoints, setMinWithdrawalPoints] = useState(1000);
   const [isClient, setIsClient] = useState(false);
 
   const refreshData = () => {
@@ -37,6 +38,7 @@ export default function WalletPage() {
       setPointHistory(getPointHistoryForUser(user.id).sort((a, b) => b.id - a.id));
       setAllUsers(getUsers());
       setPaymentMethods(getPaymentMethods().filter(m => m.enabled));
+      setMinWithdrawalPoints(getMinWithdrawal());
     }
   }
 
@@ -50,8 +52,6 @@ export default function WalletPage() {
   const [isPointsHistoryDialogOpen, setIsPointsHistoryDialogOpen] = useState(false);
   const [isWithdrawalHistoryDialogOpen, setIsWithdrawalHistoryDialogOpen] = useState(false);
   
-  const minWithdrawalPoints = 1000;
-
   const handleWithdrawalRequest = (data: WithdrawalFormValues) => {
     if (!user) {
       toast({ variant: "destructive", title: "Error", description: "You must be logged in to make a withdrawal." });

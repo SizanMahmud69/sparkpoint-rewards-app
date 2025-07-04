@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Coins } from 'lucide-react';
+import { getMinWithdrawal, saveMinWithdrawal } from '@/lib/storage';
 
 const settingsSchema = z.object({
   minWithdrawal: z.coerce.number().min(0, "Minimum must be a positive number."),
@@ -17,21 +18,23 @@ const settingsSchema = z.object({
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
 
-export function WithdrawalSettings({ initialMinWithdrawal }: { initialMinWithdrawal: number }) {
+export function WithdrawalSettings() {
   const { toast } = useToast();
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
-    defaultValues: {
-      minWithdrawal: initialMinWithdrawal,
-    },
   });
 
+  useEffect(() => {
+    const currentMin = getMinWithdrawal();
+    form.reset({ minWithdrawal: currentMin });
+  }, [form]);
+
+
   const onSubmit = (data: SettingsFormValues) => {
-    // In a real app, this would be an API call to save the settings.
-    console.log("Saving settings:", data);
+    saveMinWithdrawal(data.minWithdrawal);
     toast({
       title: 'Settings Saved',
-      description: `Minimum withdrawal points set to ${data.minWithdrawal}.`,
+      description: `Minimum withdrawal points set to ${data.minWithdrawal.toLocaleString()}.`,
     });
   };
 

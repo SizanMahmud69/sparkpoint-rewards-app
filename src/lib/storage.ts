@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { User, Withdrawal, Task, PaymentMethod, PointTransaction } from './types';
@@ -9,6 +8,8 @@ const WITHDRAWALS_KEY = 'sparkpoint_withdrawals_v2';
 const TASKS_KEY = 'sparkpoint_tasks_v2';
 const PAYMENT_METHODS_KEY = 'sparkpoint_payment_methods_v2';
 const POINT_HISTORY_KEY = 'sparkpoint_point_history_v2';
+const MIN_WITHDRAWAL_KEY = 'sparkpoint_min_withdrawal_v1';
+
 
 const getLocalStorage = () => {
   if (typeof window !== 'undefined' && window.localStorage) {
@@ -68,3 +69,27 @@ export const addPointTransaction = (transaction: Omit<PointTransaction, 'id'>) =
     }
     saveToStorage<PointTransaction>(POINT_HISTORY_KEY, [newTransaction, ...allHistory]);
 }
+
+export const getMinWithdrawal = (): number => {
+    const storage = getLocalStorage();
+    if (!storage) return 1000;
+    const minWithdrawal = storage.getItem(MIN_WITHDRAWAL_KEY);
+    if (minWithdrawal) {
+        try {
+            return JSON.parse(minWithdrawal);
+        } catch (e) {
+            console.error(`Failed to parse ${MIN_WITHDRAWAL_KEY} from localStorage`, e);
+            return 1000;
+        }
+    } else {
+        storage.setItem(MIN_WITHDRAWAL_KEY, JSON.stringify(1000));
+        return 1000;
+    }
+};
+
+export const saveMinWithdrawal = (amount: number) => {
+    const storage = getLocalStorage();
+    if (storage) {
+        storage.setItem(MIN_WITHDRAWAL_KEY, JSON.stringify(amount));
+    }
+};
