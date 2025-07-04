@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { WithdrawalTable } from '@/components/admin/WithdrawalTable';
 import { WithdrawalFormManagement } from '@/components/admin/WithdrawalFormManagement';
 import { WithdrawalSettings } from '@/components/admin/WithdrawalSettings';
-import { getWithdrawals, saveWithdrawals, getUsers, saveUsers, getPaymentMethods } from '@/lib/storage';
+import { getWithdrawals, saveWithdrawals, getUsers, saveUsers, getPaymentMethods, addPointTransaction } from '@/lib/storage';
 import type { Withdrawal, User, PaymentMethod } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -50,6 +50,14 @@ export default function AdminWithdrawalsPage() {
         return user;
       });
       saveUsers(updatedUsers);
+      
+      addPointTransaction({
+          userId: withdrawal.userId,
+          task: 'Refund: Withdrawal Rejected',
+          points: withdrawal.amountPoints,
+          date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+      });
+
     } else if (newStatus === 'Completed') {
        toast({
           title: "Withdrawal Approved",

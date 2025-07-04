@@ -18,7 +18,7 @@ import {
 import type { PointTransaction, Withdrawal, User, PaymentMethod } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useUserPoints } from '@/context/UserPointsContext';
-import { getWithdrawals, saveWithdrawals, getUsers, getPointHistoryForUser, getPaymentMethods, saveUsers } from '@/lib/storage';
+import { getWithdrawals, saveWithdrawals, getUsers, getPointHistoryForUser, getPaymentMethods, saveUsers, addPointTransaction } from '@/lib/storage';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function WalletPage() {
@@ -31,13 +31,19 @@ export default function WalletPage() {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [isClient, setIsClient] = useState(false);
 
+  const refreshData = () => {
+     if (user) {
+      setWithdrawalHistory(getWithdrawals().filter(w => w.userId === user.id));
+      setPointHistory(getPointHistoryForUser(user.id).sort((a, b) => b.id - a.id));
+      setAllUsers(getUsers());
+      setPaymentMethods(getPaymentMethods().filter(m => m.enabled));
+    }
+  }
+
   useEffect(() => {
     setIsClient(true);
     if (user) {
-      setWithdrawalHistory(getWithdrawals().filter(w => w.userId === user.id));
-      setPointHistory(getPointHistoryForUser(user.id));
-      setAllUsers(getUsers());
-      setPaymentMethods(getPaymentMethods().filter(m => m.enabled));
+      refreshData();
     }
   }, [user]);
 
@@ -75,9 +81,17 @@ export default function WalletPage() {
       status: 'Pending',
     };
 
+    addPointTransaction({
+        userId: user.id,
+        task: 'Withdrawal Request',
+        points: -data.points,
+        date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+    });
+
     const allWithdrawals = getWithdrawals();
     saveWithdrawals([newWithdrawal, ...allWithdrawals]);
-    setWithdrawalHistory(prev => [newWithdrawal, ...prev]);
+    
+    refreshData();
 
     toast({
       title: 'Withdrawal Request Submitted',
@@ -169,7 +183,7 @@ export default function WalletPage() {
           <DialogHeader>
             <DialogTitle>Points History</DialogTitle>
             <DialogDescription>
-              A log of all points you have earned.
+              A log of all points you have earned or spent.
             </DialogDescription>
           </DialogHeader>
           <div className="max-h-[60vh] overflow-y-auto pr-4">
