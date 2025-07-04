@@ -8,6 +8,8 @@ import { WithdrawalTable } from "@/components/admin/WithdrawalTable";
 
 export default function WalletPage() {
   const userWithdrawals = mockWithdrawals.filter(w => w.userId === 1 || w.userId === 2 || w.userId === 3);
+  const minWithdrawalPoints = 1000; // This would be fetched from settings in a real app
+
   return (
     <div className="space-y-8">
       <h1 className="text-3xl font-bold font-headline">My Wallet</h1>
@@ -47,7 +49,7 @@ export default function WalletPage() {
               <TabsTrigger value="withdrawal-history">Withdrawal History</TabsTrigger>
             </TabsList>
             <TabsContent value="withdraw">
-              <WithdrawalForm />
+              <WithdrawalForm minWithdrawalPoints={minWithdrawalPoints} />
             </TabsContent>
             <TabsContent value="points-history">
                 <Card>

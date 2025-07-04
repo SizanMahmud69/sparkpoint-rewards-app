@@ -13,18 +13,19 @@ import { useToast } from '@/hooks/use-toast';
 import { mockPaymentMethods } from '@/lib/data';
 import type { PaymentMethod } from '@/lib/types';
 
-const withdrawalSchema = z.object({
-  points: z.coerce.number().min(1000, { message: 'Minimum withdrawal is 1000 points.' }),
+const createWithdrawalSchema = (minPoints: number) => z.object({
+  points: z.coerce.number().min(minPoints, { message: `Minimum withdrawal is ${minPoints} points.` }),
   method: z.string({ required_error: 'Please select a payment method.' }),
   details: z.string().min(1, { message: 'Withdrawal details are required.' }),
 });
 
-type WithdrawalFormValues = z.infer<typeof withdrawalSchema>;
-
-export function WithdrawalForm() {
+export function WithdrawalForm({ minWithdrawalPoints = 1000 }: { minWithdrawalPoints?: number }) {
   const paymentMethods = mockPaymentMethods.filter(m => m.enabled);
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(paymentMethods[0] || {} as PaymentMethod);
   const { toast } = useToast();
+
+  const withdrawalSchema = createWithdrawalSchema(minWithdrawalPoints);
+  type WithdrawalFormValues = z.infer<typeof withdrawalSchema>;
 
   const form = useForm<WithdrawalFormValues>({
     resolver: zodResolver(withdrawalSchema),
@@ -49,14 +50,14 @@ export function WithdrawalForm() {
     <Card className="shadow-lg">
       <CardHeader>
         <CardTitle>Withdraw Your Points</CardTitle>
-        <CardDescription>1000 points = $1 USD. Minimum withdrawal is 1000 points.</CardDescription>
+        <CardDescription>{`1000 points = $1 USD. Minimum withdrawal is ${minWithdrawalPoints} points.`}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="points">Points to Withdraw</Label>
-              <Input id="points" type="number" placeholder="1000" {...form.register('points')} />
+              <Input id="points" type="number" placeholder={String(minWithdrawalPoints)} {...form.register('points')} />
               {form.formState.errors.points && <p className="text-sm text-destructive">{form.formState.errors.points.message}</p>}
             </div>
              <div className="space-y-2">
