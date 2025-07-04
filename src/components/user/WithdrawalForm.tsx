@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -50,8 +50,16 @@ export function WithdrawalForm({ minWithdrawalPoints = 1000, onHistoryClick }: {
   return (
     <Card className="shadow-lg flex flex-col h-full">
       <CardHeader>
-        <CardTitle>Withdraw Your Points</CardTitle>
-        <CardDescription>{`1000 points = $1 USD. Minimum withdrawal is ${minWithdrawalPoints} points.`}</CardDescription>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle>Withdraw Your Points</CardTitle>
+            <CardDescription>{`1000 points = $1 USD. Minimum withdrawal is ${minWithdrawalPoints} points.`}</CardDescription>
+          </div>
+          <Button variant="outline" size="sm" onClick={onHistoryClick} className="ml-4 flex-shrink-0">
+            <History className="mr-2 h-4 w-4" />
+            History
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="flex-grow">
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -91,12 +99,6 @@ export function WithdrawalForm({ minWithdrawalPoints = 1000, onHistoryClick }: {
           </Button>
         </form>
       </CardContent>
-      <CardFooter className="border-t p-4 mt-auto">
-         <Button variant="outline" className="w-full" onClick={onHistoryClick}>
-            <History className="mr-2 h-4 w-4" />
-            View Withdrawal History
-        </Button>
-      </CardFooter>
     </Card>
   );
 }
