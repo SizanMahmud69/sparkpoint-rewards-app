@@ -1,4 +1,3 @@
-import { Footer } from "@/components/shared/Footer";
 import { UserHeader } from "@/components/user/UserHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mail, Phone, MapPin } from "lucide-react";
@@ -44,7 +43,6 @@ export default function ContactUsPage() {
                     </CardContent>
                 </Card>
             </main>
-            <Footer />
         </div>
     )
 }

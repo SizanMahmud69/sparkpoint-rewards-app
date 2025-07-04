@@ -1,4 +1,3 @@
-import { Footer } from "@/components/shared/Footer";
 import { UserHeader } from "@/components/user/UserHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -29,7 +28,6 @@ export default function PrivacyPolicyPage() {
                     </CardContent>
                 </Card>
             </main>
-            <Footer />
         </div>
     )
 }

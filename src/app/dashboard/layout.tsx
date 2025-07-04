@@ -1,4 +1,3 @@
-import { Footer } from '@/components/shared/Footer';
 import { UserHeader } from '@/components/user/UserHeader';
 
 export default function DashboardLayout({
@@ -14,7 +13,6 @@ export default function DashboardLayout({
             {children}
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

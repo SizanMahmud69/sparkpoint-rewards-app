@@ -1,5 +1,4 @@
 import { UserHeader } from "@/components/user/UserHeader";
-import { Footer } from "@/components/shared/Footer";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Coins, User, Mail, Calendar } from 'lucide-react';
@@ -39,7 +38,6 @@ export default function ProfilePage() {
                     </div>
                 </div>
             </main>
-            <Footer />
         </div>
     );
 }

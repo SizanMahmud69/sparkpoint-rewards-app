@@ -1,5 +1,4 @@
 import { UserHeader } from "@/components/user/UserHeader";
-import { Footer } from "@/components/shared/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PointsHistoryTable } from "@/components/user/PointsHistoryTable";
@@ -77,7 +76,6 @@ export default function WalletPage() {
             </div>
           </div>
       </main>
-      <Footer />
     </div>
   );
 }
