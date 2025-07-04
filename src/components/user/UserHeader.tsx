@@ -10,16 +10,22 @@ export function UserHeader() {
       <div className="container flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-6">
           <Logo className="hidden md:flex" />
-          <nav className="hidden items-center gap-4 md:flex">
-            <Link href="/dashboard" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-              Dashboard
-            </Link>
-            <Link href="/profile" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-              Profile
-            </Link>
-            <Link href="/wallet" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-              Wallet
-            </Link>
+          <nav className="hidden items-center gap-1 md:flex">
+            <Button variant="ghost" asChild>
+              <Link href="/dashboard" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
+                Dashboard
+              </Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link href="/profile" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
+                Profile
+              </Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link href="/wallet" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
+                Wallet
+              </Link>
+            </Button>
           </nav>
         </div>
         
