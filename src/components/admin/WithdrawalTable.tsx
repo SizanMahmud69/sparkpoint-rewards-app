@@ -91,7 +91,7 @@ export function WithdrawalTable({ withdrawals: initialWithdrawals }: { withdrawa
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="hidden md:table-cell w-[120px]">Date</TableHead>
+              <TableHead className="hidden md:table-cell w-[150px]">Date & Time</TableHead>
               <TableHead>User</TableHead>
               <TableHead>Method & Details</TableHead>
               <TableHead className="text-right">Amount</TableHead>
@@ -102,7 +102,10 @@ export function WithdrawalTable({ withdrawals: initialWithdrawals }: { withdrawa
           <TableBody>
             {filteredWithdrawals.length > 0 ? filteredWithdrawals.map((w) => (
               <TableRow key={w.id}>
-                <TableCell className="hidden md:table-cell font-mono text-sm">{w.date}</TableCell>
+                <TableCell className="hidden md:table-cell">
+                  <div className="font-mono text-sm">{w.date.split(' ')[0]}</div>
+                  <div className="text-xs text-muted-foreground font-mono">{w.date.split(' ').slice(1).join(' ')}</div>
+                </TableCell>
                 <TableCell>
                   <div className="font-medium">{w.userName}</div>
                   <div className="text-xs text-muted-foreground">User ID: {w.userId}</div>
