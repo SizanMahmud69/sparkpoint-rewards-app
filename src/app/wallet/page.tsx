@@ -102,7 +102,7 @@ export default function WalletPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="max-h-[60vh] overflow-y-auto pr-4">
-            <WithdrawalTable withdrawals={userWithdrawals} />
+            <WithdrawalTable withdrawals={userWithdrawals} isUserView={true} />
           </div>
         </DialogContent>
       </Dialog>

@@ -27,7 +27,13 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
 
-export function WithdrawalTable({ withdrawals: initialWithdrawals }: { withdrawals: Withdrawal[] }) {
+export function WithdrawalTable({
+  withdrawals: initialWithdrawals,
+  isUserView = false,
+}: {
+  withdrawals: Withdrawal[];
+  isUserView?: boolean;
+}) {
   const [withdrawals, setWithdrawals] = React.useState(initialWithdrawals);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('All');
@@ -53,54 +59,58 @@ export function WithdrawalTable({ withdrawals: initialWithdrawals }: { withdrawa
     }
   };
 
-  const filteredWithdrawals = withdrawals.filter(w => {
-    const matchesSearch = w.userName.toLowerCase().includes(searchTerm.toLowerCase()) || w.details.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'All' || w.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredWithdrawals = !isUserView
+    ? withdrawals.filter(w => {
+      const matchesSearch = w.userName.toLowerCase().includes(searchTerm.toLowerCase()) || w.details.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === 'All' || w.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    })
+    : withdrawals;
 
   return (
      <Card>
-      <CardHeader>
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-                <CardTitle>Withdrawal History</CardTitle>
-                <CardDescription>Review and manage user withdrawal requests.</CardDescription>
-            </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-                <div className="relative w-full sm:w-64">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                        placeholder="Search by user or details..." 
-                        className="pl-8"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full sm:w-[180px]">
-                    <SelectValue placeholder="Filter by status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All">All Statuses</SelectItem>
-                    <SelectItem value="Pending">Pending</SelectItem>
-                    <SelectItem value="Completed">Completed</SelectItem>
-                    <SelectItem value="Rejected">Rejected</SelectItem>
-                  </SelectContent>
-                </Select>
-            </div>
-        </div>
-      </CardHeader>
-      <CardContent>
+      {!isUserView && (
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                  <CardTitle>Withdrawal History</CardTitle>
+                  <CardDescription>Review and manage user withdrawal requests.</CardDescription>
+              </div>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <div className="relative w-full sm:w-64">
+                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                          placeholder="Search by user or details..." 
+                          className="pl-8"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                  </div>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-full sm:w-[180px]">
+                      <SelectValue placeholder="Filter by status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="All">All Statuses</SelectItem>
+                      <SelectItem value="Pending">Pending</SelectItem>
+                      <SelectItem value="Completed">Completed</SelectItem>
+                      <SelectItem value="Rejected">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
+              </div>
+          </div>
+        </CardHeader>
+      )}
+      <CardContent className={isUserView ? 'pt-6' : ''}>
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="hidden md:table-cell w-[150px]">Date & Time</TableHead>
-              <TableHead>User</TableHead>
+              {!isUserView && <TableHead>User</TableHead>}
               <TableHead>Method & Details</TableHead>
               <TableHead className="text-right">Amount</TableHead>
               <TableHead className="text-center w-[120px]">Status</TableHead>
-              <TableHead className="text-right w-[80px]">Actions</TableHead>
+              {!isUserView && <TableHead className="text-right w-[80px]">Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -112,18 +122,20 @@ export function WithdrawalTable({ withdrawals: initialWithdrawals }: { withdrawa
                   <div className="font-mono text-sm">{w.date.split(' ')[0]}</div>
                   <div className="text-xs text-muted-foreground font-mono">{w.date.split(' ').slice(1).join(' ')}</div>
                 </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-9 w-9 hidden sm:flex">
-                        <AvatarImage src={user?.avatar} alt={user?.name} data-ai-hint="person face" />
-                        <AvatarFallback>{w.userName.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                        <div className="font-medium">{w.userName}</div>
-                        <div className="text-xs text-muted-foreground">ID: {w.userId}</div>
+                {!isUserView && (
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-9 w-9 hidden sm:flex">
+                          <AvatarImage src={user?.avatar} alt={user?.name} data-ai-hint="person face" />
+                          <AvatarFallback>{w.userName.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                          <div className="font-medium">{w.userName}</div>
+                          <div className="text-xs text-muted-foreground">ID: {w.userId}</div>
+                      </div>
                     </div>
-                  </div>
-                </TableCell>
+                  </TableCell>
+                )}
                 <TableCell>
                   <div className="font-medium">{w.method}</div>
                   <div className="text-xs text-muted-foreground truncate max-w-[150px]">{w.details}</div>
@@ -135,32 +147,34 @@ export function WithdrawalTable({ withdrawals: initialWithdrawals }: { withdrawa
                 <TableCell className="text-center">
                     <Badge variant={getStatusBadgeVariant(w.status)} className="capitalize">{w.status}</Badge>
                 </TableCell>
-                <TableCell className="text-right">
-                    {w.status === 'Pending' && (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
-                                    <span className="sr-only">Open menu</span>
-                                    <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleStatusChange(w.id, 'Completed')}>
-                                    <CheckCircle className="mr-2 h-4 w-4"/>
-                                    <span>Approve</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleStatusChange(w.id, 'Rejected')} className="text-destructive focus:text-destructive">
-                                    <XCircle className="mr-2 h-4 w-4"/>
-                                    <span>Reject</span>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    )}
-                </TableCell>
+                {!isUserView && (
+                    <TableCell className="text-right">
+                        {w.status === 'Pending' && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
+                                        <span className="sr-only">Open menu</span>
+                                        <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => handleStatusChange(w.id, 'Completed')}>
+                                        <CheckCircle className="mr-2 h-4 w-4"/>
+                                        <span>Approve</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleStatusChange(w.id, 'Rejected')} className="text-destructive focus:text-destructive">
+                                        <XCircle className="mr-2 h-4 w-4"/>
+                                        <span>Reject</span>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
+                    </TableCell>
+                )}
               </TableRow>
             )}) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
+                <TableCell colSpan={isUserView ? 4 : 6} className="h-24 text-center">
                   No results found.
                 </TableCell>
               </TableRow>
