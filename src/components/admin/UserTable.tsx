@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { MoreHorizontal } from 'lucide-react';
 import type { User } from '@/lib/types';
 import { Badge } from '../ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 
 export function UserTable({ users }: { users: User[] }) {
   return (
@@ -67,4 +68,3 @@ export function UserTable({ users }: { users: User[] }) {
     </Card>
   );
 }
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
