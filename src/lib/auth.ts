@@ -32,24 +32,33 @@ export const registerUser = (name: string, email: string, password: string): { s
     avatar: 'https://placehold.co/100x100.png',
   };
 
-  saveUsers([...users, newUser]);
-
   addPointTransaction({
     userId: newUser.id,
     task: 'Registration Bonus',
     points: 50,
     date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
   });
+
+  saveUsers([...users, newUser]);
   
   return { success: true, message: 'Registration successful!', user: newUser };
 };
 
-export const loginUser = (email: string, password: string): User | null => {
+export const loginUser = (email: string, password: string): { success: boolean; user?: User; message: string } => {
   const users = getUsers();
   const user = users.find(
     u => u.email.toLowerCase() === email.toLowerCase() && u.password === password
   );
-  return user || null;
+
+  if (!user) {
+    return { success: false, message: 'Invalid email or password. Please try again.' };
+  }
+
+  if (user.status === 'Suspended') {
+    return { success: false, message: 'Your account has been suspended. Please contact support.' };
+  }
+
+  return { success: true, user, message: 'Login successful!' };
 };
 
 export const setLoggedInUser = (user: User) => {

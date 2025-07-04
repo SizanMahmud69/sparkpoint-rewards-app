@@ -48,10 +48,10 @@ export function LoginForm() {
         return;
       }
 
-      const user = loginUser(data.email, data.password);
+      const result = loginUser(data.email, data.password);
 
-      if (user) {
-        setLoggedInUser(user);
+      if (result.success && result.user) {
+        setLoggedInUser(result.user);
         toast({
           title: 'Login Successful',
           description: 'Welcome back! Redirecting to your dashboard...',
@@ -62,7 +62,7 @@ export function LoginForm() {
         toast({
           variant: "destructive",
           title: 'Login Failed',
-          description: 'Invalid email or password. Please try again.',
+          description: result.message,
         });
       }
       setIsLoading(false);
