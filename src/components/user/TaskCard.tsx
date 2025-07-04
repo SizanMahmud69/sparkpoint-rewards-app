@@ -1,36 +1,31 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import type { LucideProps } from 'lucide-react';
-import { Calendar, HeartCrack, VenetianMask, RotateCw, Timer } from 'lucide-react';
+import { Calendar, HeartCrack, VenetianMask, RotateCw, Timer, Gift } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { Task } from '@/lib/types';
 
 const iconMap: { [key: string]: React.ComponentType<LucideProps> } = {
   Calendar,
   HeartCrack,
   VenetianMask,
   RotateCw,
+  Gift,
 };
 
-interface TaskCardProps {
-  title: string;
-  description: string;
-  points: string;
-  icon: keyof typeof iconMap;
-  color: string;
-  actionText: string;
-}
+type TaskCardProps = Task;
 
-export function TaskCard({ title, description, points, icon, color, actionText }: TaskCardProps) {
+export function TaskCard({ id, title, description, points, icon, color, actionText }: TaskCardProps) {
   const { toast } = useToast();
   const [isDisabled, setIsDisabled] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
-  const taskKey = `task_cooldown_${title.replace(/\s+/g, '_')}`;
+  const taskKey = `task_cooldown_${id}`;
 
-  const Icon = iconMap[icon];
+  const Icon = iconMap[icon] || Gift;
 
   useEffect(() => {
     const cooldownEnd = localStorage.getItem(taskKey);
@@ -47,30 +42,31 @@ export function TaskCard({ title, description, points, icon, color, actionText }
 
   useEffect(() => {
     if (timeLeft <= 0) {
+      if (isDisabled) localStorage.removeItem(taskKey);
       setIsDisabled(false);
       return;
     }
     const intervalId = setInterval(() => {
-      setTimeLeft(timeLeft - 1000);
+      setTimeLeft(prevTime => prevTime - 1000);
     }, 1000);
     return () => clearInterval(intervalId);
-  }, [timeLeft]);
+  }, [timeLeft, isDisabled, taskKey]);
 
   const handleTaskComplete = () => {
-    const randomPointsMap: { [key: string]: number[] } = {
-        'Scratch & Win': [10, 20, 30],
-        'Crack Your Heart': [5, 10, 15],
-        'Spin & Wheel': [5, 8, 10, 15, 20],
-        'Daily Login Reward': [20]
-    };
-
-    const possiblePoints = randomPointsMap[title] || [10];
-    const earnedPoints = possiblePoints[Math.floor(Math.random() * possiblePoints.length)];
+    let possiblePoints: number[];
+    if (points.includes('/')) {
+        possiblePoints = points.split('/').map(p => parseInt(p.trim(), 10));
+    } else if (points.toLowerCase().includes('up to')) {
+        const max = parseInt(points.replace(/[^0-9]/g, ''), 10);
+        possiblePoints = [Math.floor(Math.random() * max) + 1];
+    } else {
+        possiblePoints = [parseInt(points, 10) || 10];
+    }
+    const earnedPoints = possiblePoints[Math.floor(Math.random() * possiblePoints.length)] || possiblePoints[0];
 
     toast({
       title: 'Task Complete!',
       description: `You earned ${earnedPoints} points from ${title}.`,
-      className: 'bg-accent text-accent-foreground',
     });
 
     const cooldownDuration = 24 * 60 * 60 * 1000; // 24 hours
@@ -88,33 +84,31 @@ export function TaskCard({ title, description, points, icon, color, actionText }
   };
 
   return (
-    <Card className="flex flex-col justify-between shadow-lg hover:shadow-xl transition-shadow duration-300">
-      <CardHeader>
-        <div className="flex items-center gap-4">
-          <div className={cn('p-3 rounded-full', color)}>
-            {Icon && <Icon className="h-6 w-6 text-white" />}
-          </div>
-          <div>
-            <CardTitle className="font-headline text-lg">{title}</CardTitle>
-            <CardDescription className="text-sm">{description}</CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <p className="text-2xl font-bold text-primary font-headline">{points} <span className="text-sm font-normal text-muted-foreground">Points</span></p>
-      </CardContent>
-      <CardFooter>
+    <Card className={cn(
+      "flex flex-col text-center items-center p-6 space-y-4 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1",
+      color,
+      "text-white"
+    )}>
+      <Icon className="h-12 w-12 text-white/80" />
+      <div className="flex-grow">
+          <h3 className="font-headline text-lg">{title}</h3>
+          <p className="text-sm text-white/70">{description}</p>
+      </div>
+      <div className="bg-white/20 rounded-full px-4 py-1 text-sm font-bold">
+        {points} Points
+      </div>
+       <div className="w-full pt-2">
         {isDisabled ? (
-          <Button disabled className="w-full">
-            <Timer className="mr-2 h-4 w-4" />
-            Come back in {formatTime(timeLeft)}
-          </Button>
-        ) : (
-          <Button onClick={handleTaskComplete} className="w-full bg-primary hover:bg-primary/90">
-            {actionText}
-          </Button>
+            <Button disabled className="w-full bg-white/20 text-white/70 backdrop-blur-sm">
+                <Timer className="mr-2 h-4 w-4" />
+                {formatTime(timeLeft)}
+            </Button>
+            ) : (
+            <Button onClick={handleTaskComplete} className="w-full bg-white text-primary font-bold hover:bg-white/90">
+                {actionText}
+            </Button>
         )}
-      </CardFooter>
+       </div>
     </Card>
   );
 }

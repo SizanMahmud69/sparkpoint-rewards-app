@@ -37,8 +37,6 @@ export function RegisterForm() {
       toast({
         title: 'Registration Successful!',
         description: 'You have been awarded 50 bonus points. Redirecting to your dashboard...',
-        variant: 'default',
-        className: 'bg-accent text-accent-foreground',
       });
       router.push('/dashboard');
       setIsLoading(false);
