@@ -1,7 +1,7 @@
 import { UserHeader } from "@/components/user/UserHeader";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Coins, User, Mail, Calendar } from 'lucide-react';
+import { Coins, Mail, Calendar, Monitor } from 'lucide-react';
 
 export default function ProfilePage() {
     return (
@@ -20,18 +20,36 @@ export default function ProfilePage() {
                                 <CardTitle className="text-2xl font-headline">John Doe</CardTitle>
                                 <CardDescription>Member since 2023-10-01</CardDescription>
                             </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg">
-                                    <Mail className="h-5 w-5 text-muted-foreground"/>
-                                    <span className="text-sm font-medium">john.doe@example.com</span>
-                                </div>
-                                <div className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg">
-                                    <Coins className="h-5 w-5 text-muted-foreground"/>
-                                    <span className="text-sm font-medium">1,250 Points</span>
-                                </div>
-                                 <div className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg">
-                                    <Calendar className="h-5 w-5 text-muted-foreground"/>
-                                    <span className="text-sm font-medium">Joined on October 1, 2023</span>
+                            <CardContent className="pt-6">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-xl">
+                                        <Mail className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                                        <div>
+                                            <h4 className="font-semibold">Email Address</h4>
+                                            <p className="text-sm text-muted-foreground">john.doe@example.com</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-xl">
+                                        <Coins className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                                        <div>
+                                            <h4 className="font-semibold">Point Balance</h4>
+                                            <p className="text-sm text-muted-foreground">1,250 Points</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-xl">
+                                        <Calendar className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                                        <div>
+                                            <h4 className="font-semibold">Joined Date</h4>
+                                            <p className="text-sm text-muted-foreground">October 1, 2023</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-xl">
+                                        <Monitor className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                                        <div>
+                                            <h4 className="font-semibold">Device IP</h4>
+                                            <p className="text-sm text-muted-foreground">192.168.1.100</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
