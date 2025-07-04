@@ -13,6 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Task } from '@/lib/types';
 import { Label } from '../ui/label';
+import { Input } from '../ui/input';
 
 export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
   const [tasks, setTasks] = React.useState(initialTasks);
@@ -23,6 +24,14 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
     console.log(`Task ${id} status changed to: ${enabled}`);
     setTasks(tasks.map(task => task.id === id ? { ...task, enabled } : task));
   };
+
+  const handlePointsChange = (id: number, points: string) => {
+    // In a real app, you'd make an API call here to update the task points.
+    // For this mock, we just update the local state.
+    console.log(`Task ${id} points changed to: ${points}`);
+    setTasks(tasks.map(task => task.id === id ? { ...task, points } : task));
+  };
+
 
   return (
     <Card>
@@ -45,7 +54,14 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
               <TableRow key={task.id}>
                 <TableCell className="font-medium">{task.title}</TableCell>
                 <TableCell>{task.description}</TableCell>
-                <TableCell>{task.points}</TableCell>
+                <TableCell>
+                  <Input 
+                    type="text" 
+                    value={task.points}
+                    onChange={(e) => handlePointsChange(task.id, e.target.value)}
+                    className="max-w-[120px]"
+                  />
+                </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end space-x-2">
                     <Label htmlFor={`task-switch-${task.id}`} className="sr-only">
