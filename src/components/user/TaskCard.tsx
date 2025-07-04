@@ -37,6 +37,11 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
   const Icon = iconMap[icon] || Gift;
 
   useEffect(() => {
+    if (limitPerDay === 0) {
+        setIsDisabled(true);
+        return;
+    }
+
     if (!taskUsageKey || !lastPointsKey) return;
     
     const usageDataString = localStorage.getItem(taskUsageKey);
@@ -85,7 +90,7 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
 
   useEffect(() => {
     if (!isDisabled || timeLeft <= 0) {
-      if (isDisabled && timeLeft <= 0) {
+      if (isDisabled && timeLeft <= 0 && limitPerDay !== 0) {
         localStorage.removeItem(taskUsageKey);
         localStorage.removeItem(lastPointsKey);
         setEarnedPoints(null);
@@ -105,7 +110,7 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
     }, 1000);
 
     return () => clearInterval(intervalId);
-  }, [timeLeft, isDisabled, taskUsageKey, lastPointsKey]);
+  }, [timeLeft, isDisabled, taskUsageKey, lastPointsKey, limitPerDay]);
 
   const handleTaskComplete = async () => {
     if (!user || !taskUsageKey || !lastPointsKey) return;
@@ -197,8 +202,14 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
              <div className="w-full pt-2">
               {isDisabled ? (
                   <Button disabled className="w-full bg-white/20 text-white/70 backdrop-blur-sm">
-                      <Timer className="mr-2 h-4 w-4" />
-                      {formatTime(timeLeft)}
+                      {timeLeft > 0 ? (
+                        <>
+                            <Timer className="mr-2 h-4 w-4" />
+                            {formatTime(timeLeft)}
+                        </>
+                      ) : (
+                        'Unavailable'
+                      )}
                   </Button>
                   ) : (
                   <Button onClick={handleTaskComplete} className="w-full bg-white text-primary font-bold hover:bg-white/90">

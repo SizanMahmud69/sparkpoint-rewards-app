@@ -144,13 +144,13 @@ export function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
                       defaultValue={task.limitPerDay ?? 1}
                       onBlur={(e) => {
                           const value = Number(e.target.value);
-                          if (value > 0) {
+                          if (value >= 0) {
                              handleTaskUpdate(task.id, { limitPerDay: value })
                           }
                       }}
                       className="max-w-[100px]"
                       aria-label={`Daily limit for ${task.title}`}
-                      min="1"
+                      min="0"
                     />
                   </TableCell>
                   <TableCell className="text-center">

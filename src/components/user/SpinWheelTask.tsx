@@ -37,6 +37,11 @@ export function SpinWheelTask({ task }: { task: Task }) {
     const taskUsageKey = user ? `task_usage_${user.id}_${task.id}` : null;
 
     useEffect(() => {
+        if (limitPerDay === 0) {
+            setIsDisabled(true);
+            return;
+        }
+
         if (!taskUsageKey) return;
 
         const usageDataString = localStorage.getItem(taskUsageKey);
@@ -212,10 +217,14 @@ export function SpinWheelTask({ task }: { task: Task }) {
                 <div className="w-full pt-1">
                     <Button onClick={handleSpin} disabled={isSpinning || isDisabled} className="w-full bg-white text-primary font-bold hover:bg-white/90">
                         {isDisabled ? (
-                            <span className="flex items-center">
-                                <Timer className="mr-2 h-4 w-4" />
-                                {formatTime(timeLeft)}
-                            </span>
+                            timeLeft > 0 ? (
+                                <span className="flex items-center">
+                                    <Timer className="mr-2 h-4 w-4" />
+                                    {formatTime(timeLeft)}
+                                </span>
+                            ) : (
+                                'Unavailable'
+                            )
                         ) : isSpinning ? (
                             'Spinning...'
                         ) : (
