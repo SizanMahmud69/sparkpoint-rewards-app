@@ -1,4 +1,4 @@
-import type { User, Withdrawal, PointTransaction } from './types';
+import type { User, Withdrawal, PointTransaction, Task } from './types';
 
 export const mockUsers: User[] = [
   { id: 1, name: 'Alice Johnson', email: 'alice@example.com', points: 1250, registrationDate: '2023-10-01' },
@@ -18,4 +18,47 @@ export const mockPointHistory: PointTransaction[] = [
     { id: 3, task: 'Spin & Win', points: 15, date: '2023-11-09' },
     { id: 4, task: 'Scratch & Win', points: 30, date: '2023-11-09' },
     { id: 5, task: 'Crack Your Heart', points: 5, date: '2023-11-09' },
+];
+
+export const mockTasks: Task[] = [
+  {
+    id: 1,
+    title: 'Daily Login Reward',
+    description: 'Claim your daily points for logging in.',
+    points: 'Up to 70',
+    icon: 'Calendar',
+    color: 'bg-blue-500',
+    actionText: 'Claim Reward',
+    enabled: true,
+  },
+  {
+    id: 2,
+    title: 'Scratch & Win',
+    description: 'Scratch a card for a surprise reward.',
+    points: '10/20/30',
+    icon: 'VenetianMask',
+    color: 'bg-green-500',
+    actionText: 'Scratch Now',
+    enabled: true,
+  },
+  {
+    id: 3,
+    title: 'Crack Your Heart',
+    description: 'Click the heart to release points.',
+    points: '5/10/15',
+    icon: 'HeartCrack',
+    color: 'bg-red-500',
+    actionText: 'Crack It',
+    enabled: true,
+  },
+  {
+    id: 4,
+    title: 'Spin & Wheel',
+    description: 'Spin the wheel for a chance to win big.',
+    points: '5/8/10/15/20',
+    icon: 'RotateCw',
+    color: 'bg-yellow-500',
+    actionText: 'Spin Wheel',
+    enabled: false,
+  },
 ];

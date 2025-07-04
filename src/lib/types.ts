@@ -24,3 +24,14 @@ export type PointTransaction = {
   points: number;
   date: string;
 };
+
+export type Task = {
+  id: number;
+  title: string;
+  description: string;
+  points: string;
+  icon: string;
+  color: string;
+  actionText: string;
+  enabled: boolean;
+};
