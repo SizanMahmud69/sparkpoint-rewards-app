@@ -10,9 +10,17 @@ import { mockPointHistory, mockWithdrawals } from "@/lib/data";
 import { Coins, DollarSign, History } from 'lucide-react';
 import { WithdrawalTable } from "@/components/admin/WithdrawalTable";
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 
 export default function WalletPage() {
   const [activeTab, setActiveTab] = useState('withdraw');
+  const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
   const userWithdrawals = mockWithdrawals.filter(w => w.userId === 1 || w.userId === 2 || w.userId === 3);
   const minWithdrawalPoints = 1000; // This would be fetched from settings in a real app
 
@@ -39,7 +47,7 @@ export default function WalletPage() {
                     </CardHeader>
                     <CardContent className="flex-grow p-0" />
                     <CardFooter className="p-5 pt-0">
-                      <Button variant="outline" className="w-full" onClick={() => setActiveTab('points-history')}>
+                      <Button variant="outline" className="w-full" onClick={() => setIsHistoryDialogOpen(true)}>
                           <History className="mr-2 h-4 w-4" />
                           View History
                       </Button>
@@ -70,17 +78,6 @@ export default function WalletPage() {
                     <TabsContent value="withdraw">
                       <WithdrawalForm minWithdrawalPoints={minWithdrawalPoints} />
                     </TabsContent>
-                    <TabsContent value="points-history">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Points History</CardTitle>
-                                <CardDescription>A log of all points you have earned.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <PointsHistoryTable transactions={mockPointHistory} />
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
                      <TabsContent value="withdrawal-history">
                         <WithdrawalTable withdrawals={userWithdrawals} />
                     </TabsContent>
@@ -90,6 +87,20 @@ export default function WalletPage() {
             </div>
           </div>
       </main>
+
+      <Dialog open={isHistoryDialogOpen} onOpenChange={setIsHistoryDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Points History</DialogTitle>
+            <DialogDescription>
+              A log of all points you have earned.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-y-auto pr-4">
+            <PointsHistoryTable transactions={mockPointHistory} />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
