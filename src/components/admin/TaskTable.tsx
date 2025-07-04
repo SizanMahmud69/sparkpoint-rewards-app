@@ -33,13 +33,19 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
   const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = React.useState(false);
 
   const handleEnabledChange = (id: number, enabled: boolean) => {
-    // In a real app, you'd make an API call here to update the task status.
-    setTasks(tasks.map(task => task.id === id ? { ...task, enabled } : task));
+    setTasks(currentTasks =>
+      currentTasks.map(task =>
+        task.id === id ? { ...task, enabled } : task
+      )
+    );
   };
 
   const handlePointsChange = (id: number, points: string) => {
-    // In a real app, you'd make an API call here to update the task points.
-    setTasks(tasks.map(task => task.id === id ? { ...task, points } : task));
+    setTasks(currentTasks =>
+      currentTasks.map(task =>
+        task.id === id ? { ...task, points } : task
+      )
+    );
   };
 
   const handleAddTask = (newTaskData: Omit<Task, 'id' | 'enabled'>) => {
