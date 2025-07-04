@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { mockPaymentMethods } from '@/lib/data';
+import type { PaymentMethod } from '@/lib/types';
 
 const withdrawalSchema = z.object({
   points: z.coerce.number().min(1000, { message: 'Minimum withdrawal is 1000 points.' }),
@@ -19,15 +21,9 @@ const withdrawalSchema = z.object({
 
 type WithdrawalFormValues = z.infer<typeof withdrawalSchema>;
 
-const paymentMethods = [
-  { value: 'বিকাশ', label: 'bKash Account Number', placeholder: 'e.g., 01700000000' },
-  { value: 'নগদ', label: 'Nagad Account Number', placeholder: 'e.g., 01800000000' },
-  { value: 'Binance ID', label: 'Binance ID', placeholder: 'e.g., 123456789' },
-  { value: 'USDT (TRC-20)', label: 'USDT (TRC-20) Address', placeholder: 'e.g., T...' },
-];
-
 export function WithdrawalForm() {
-  const [selectedMethod, setSelectedMethod] = useState(paymentMethods[0]);
+  const paymentMethods = mockPaymentMethods.filter(m => m.enabled);
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(paymentMethods[0] || {} as PaymentMethod);
   const { toast } = useToast();
 
   const form = useForm<WithdrawalFormValues>({

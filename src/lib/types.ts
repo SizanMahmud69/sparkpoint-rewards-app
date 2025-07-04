@@ -37,3 +37,10 @@ export type Task = {
   actionText: string;
   enabled: boolean;
 };
+
+export type PaymentMethod = {
+  value: string;
+  label: string;
+  placeholder: string;
+  enabled: boolean;
+};

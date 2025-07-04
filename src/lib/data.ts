@@ -1,4 +1,4 @@
-import type { User, Withdrawal, PointTransaction, Task } from './types';
+import type { User, Withdrawal, PointTransaction, Task, PaymentMethod } from './types';
 
 export const mockUsers: User[] = [
   { id: 1, name: 'Alice Johnson', email: 'alice@example.com', points: 1250, registrationDate: '2023-10-01', status: 'Active', avatar: 'https://placehold.co/100x100.png' },
@@ -65,4 +65,11 @@ export const mockTasks: Task[] = [
     actionText: 'Spin Wheel',
     enabled: false,
   },
+];
+
+export const mockPaymentMethods: PaymentMethod[] = [
+  { value: 'বিকাশ', label: 'bKash Account Number', placeholder: 'e.g., 01700000000', enabled: true },
+  { value: 'নগদ', label: 'Nagad Account Number', placeholder: 'e.g., 01800000000', enabled: true },
+  { value: 'Binance ID', label: 'Binance ID', placeholder: 'e.g., 123456789', enabled: true },
+  { value: 'USDT (TRC-20)', label: 'USDT (TRC-20) Address', placeholder: 'e.g., T...', enabled: false },
 ];
