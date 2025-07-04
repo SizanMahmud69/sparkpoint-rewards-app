@@ -13,6 +13,7 @@ interface UserPointsContextType {
   updatePoints: (amount: number) => void;
   logout: () => void;
   loading: boolean;
+  refreshUser: () => Promise<void>;
 }
 
 const UserPointsContext = createContext<UserPointsContextType | undefined>(undefined);
@@ -31,6 +32,8 @@ export const UserPointsProvider = ({ children }: { children: ReactNode }) => {
         const { password, ...userToDisplay } = currentUser;
         setUser(userToDisplay);
         setPoints(currentUser.points);
+        // Also update the local storage user in case it's stale
+        setLoggedInUser(userToDisplay);
       } else {
         // User not found in DB, log them out
         logout();
@@ -38,6 +41,10 @@ export const UserPointsProvider = ({ children }: { children: ReactNode }) => {
     }
     setLoading(false);
   }, []);
+
+  const refreshUser = useCallback(async () => {
+    await fetchCurrentUser();
+  }, [fetchCurrentUser]);
 
   useEffect(() => {
     fetchCurrentUser();
@@ -68,7 +75,7 @@ export const UserPointsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <UserPointsContext.Provider value={{ user, points, updatePoints, logout, loading }}>
+    <UserPointsContext.Provider value={{ user, points, updatePoints, logout, loading, refreshUser }}>
       {children}
     </UserPointsContext.Provider>
   );

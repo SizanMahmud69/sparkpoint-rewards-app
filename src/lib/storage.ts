@@ -1,3 +1,4 @@
+
 'use client';
 
 import { db } from './firebase';
@@ -80,6 +81,10 @@ export const updateUserStatus = async (id: string, status: 'Active' | 'Suspended
 export const updateUserPoints = async (id: string, pointsToAdd: number): Promise<void> => {
     const userRef = doc(db, 'users', id);
     await updateDoc(userRef, { points: increment(pointsToAdd) });
+};
+export const updateUserAvatar = async (id: string, avatar: string): Promise<void> => {
+    const userRef = doc(db, 'users', id);
+    await updateDoc(userRef, { avatar });
 };
 
 // Withdrawal Functions
