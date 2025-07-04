@@ -1,26 +1,23 @@
 import Link from "next/link";
 import { Logo } from "../Logo";
+import { Button } from "../ui/button";
 
 export function Footer() {
     return (
-        <footer className="w-full border-t bg-card text-card-foreground">
-            <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
-                <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-                    <div className="flex-shrink-0">
-                        <Logo />
-                    </div>
-                    <div className="flex space-x-6 text-sm">
-                        <Link href="/privacy-policy" className="text-muted-foreground hover:text-primary transition-colors">
-                            Privacy Policy
-                        </Link>
-                        <Link href="/contact-us" className="text-muted-foreground hover:text-primary transition-colors">
-                            Contact Us
-                        </Link>
-                    </div>
+        <footer className="w-full border-t bg-background">
+            <div className="container mx-auto flex flex-col items-center justify-between gap-6 py-8 px-4 sm:flex-row sm:px-6 lg:px-8">
+                <Logo />
+                <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm">
+                    <Button variant="link" asChild className="text-muted-foreground px-0 hover:text-primary">
+                        <Link href="/privacy-policy">Privacy Policy</Link>
+                    </Button>
+                     <Button variant="link" asChild className="text-muted-foreground px-0 hover:text-primary">
+                        <Link href="/contact-us">Contact Us</Link>
+                    </Button>
                 </div>
-                <div className="mt-8 text-center text-sm text-muted-foreground">
-                    © {new Date().getFullYear()} SparkPoint Rewards Hub. All rights reserved.
-                </div>
+                <p className="text-center text-sm text-muted-foreground">
+                    © {new Date().getFullYear()} SparkPoint. All rights reserved.
+                </p>
             </div>
         </footer>
     );
