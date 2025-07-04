@@ -78,7 +78,7 @@ export function SpinWheelTask({ task }: { task: Task }) {
 
      useEffect(() => {
         if (!isDisabled || timeLeft <= 0) {
-            if (isDisabled && timeLeft <=0) {
+            if (isDisabled && timeLeft <= 0 && limitPerDay !== 0) {
                  localStorage.removeItem(taskUsageKey);
                  setIsDisabled(false);
                  setCompletions(0);
@@ -94,7 +94,7 @@ export function SpinWheelTask({ task }: { task: Task }) {
         }, 1000);
         
         return () => clearInterval(intervalId);
-    }, [timeLeft, isDisabled, taskUsageKey]);
+    }, [timeLeft, isDisabled, taskUsageKey, limitPerDay]);
 
 
     const handleSpin = () => {
@@ -111,46 +111,58 @@ export function SpinWheelTask({ task }: { task: Task }) {
         const prize = segments[segmentIndex];
 
         setTimeout(async () => {
-            const earnedPoints = parseInt(prize.label, 10);
-            contextUpdatePoints(earnedPoints);
-            await updateUserPoints(user.id, earnedPoints);
-            await addPointTransaction({
-                userId: user.id,
-                task: task.title,
-                points: earnedPoints,
-                date: new Date().toISOString(),
-            });
-            toast({
-                title: 'Congratulations!',
-                description: `You won ${prize.label} points!`,
-            });
-            setIsSpinning(false);
-            
-            const usageDataString = localStorage.getItem(taskUsageKey);
-            let newCount = 1;
-            let newUsageData;
+            try {
+                const earnedPoints = parseInt(prize.label, 10);
+                await updateUserPoints(user.id, earnedPoints);
+                contextUpdatePoints(earnedPoints);
+                await addPointTransaction({
+                    userId: user.id,
+                    task: task.title,
+                    points: earnedPoints,
+                    date: new Date().toISOString(),
+                });
+                toast({
+                    title: 'Congratulations!',
+                    description: `You won ${prize.label} points!`,
+                });
+                
+                let newCount = 1;
+                try {
+                    const usageDataString = localStorage.getItem(taskUsageKey);
+                    if (usageDataString) {
+                        const usageData = JSON.parse(usageDataString);
+                        newCount = usageData.count + 1;
+                        const newUsageData = { ...usageData, count: newCount };
+                        localStorage.setItem(taskUsageKey, JSON.stringify(newUsageData));
+                    } else {
+                        const newUsageData = {
+                            count: 1,
+                            firstCompletionTimestamp: new Date().toISOString()
+                        };
+                        localStorage.setItem(taskUsageKey, JSON.stringify(newUsageData));
+                    }
+                } catch (error) {
+                    console.error("Error updating spin wheel usage data:", error);
+                }
+                
+                setCompletions(newCount);
 
-            if (usageDataString) {
-                const usageData = JSON.parse(usageDataString);
-                newCount = usageData.count + 1;
-                newUsageData = { ...usageData, count: newCount };
-            } else {
-                newUsageData = {
-                    count: 1,
-                    firstCompletionTimestamp: new Date().toISOString()
-                };
+                if (newCount >= limitPerDay) {
+                    setIsDisabled(true);
+                    const twentyFourHours = 24 * 60 * 60 * 1000;
+                    setTimeLeft(twentyFourHours);
+                }
+            } catch (error) {
+                console.error("Failed to process spin result:", error);
+                 toast({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "Could not process your spin. Please try again."
+                });
+            } finally {
+                setIsSpinning(false);
             }
-            
-            localStorage.setItem(taskUsageKey, JSON.stringify(newUsageData));
-            setCompletions(newCount);
-
-            if (newCount >= limitPerDay) {
-                setIsDisabled(true);
-                const twentyFourHours = 24 * 60 * 60 * 1000;
-                setTimeLeft(twentyFourHours);
-            }
-
-        }, 5000); // Must match transition duration
+        }, 5000);
     };
 
     const formatTime = (ms: number) => {

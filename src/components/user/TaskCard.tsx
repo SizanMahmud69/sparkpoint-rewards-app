@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import type { LucideProps } from 'lucide-react';
-import { Calendar, HeartCrack, VenetianMask, RotateCw, Timer, Gift, Dices } from 'lucide-react';
+import { Calendar, HeartCrack, VenetianMask, RotateCw, Timer, Gift, Dices, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Task } from '@/lib/types';
 import { useUserPoints } from '@/context/UserPointsContext';
@@ -27,6 +27,7 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
   const { toast } = useToast();
   const { user, updatePoints: contextUpdatePoints } = useUserPoints();
   const [isDisabled, setIsDisabled] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [earnedPoints, setEarnedPoints] = useState<number | null>(null);
   const [completions, setCompletions] = useState(0);
@@ -55,7 +56,6 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
             const twentyFourHours = 24 * 60 * 60 * 1000;
 
             if (now - firstCompletionTime > twentyFourHours) {
-                // Cooldown expired
                 localStorage.removeItem(taskUsageKey);
                 localStorage.removeItem(lastPointsKey);
                 setIsDisabled(false);
@@ -63,7 +63,6 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
                 setTimeLeft(0);
                 setEarnedPoints(null);
             } else {
-                // Still in cooldown period
                 setCompletions(usageData.count);
                 if (usageData.count >= limitPerDay) {
                     setIsDisabled(true);
@@ -113,58 +112,74 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
   }, [timeLeft, isDisabled, taskUsageKey, lastPointsKey, limitPerDay]);
 
   const handleTaskComplete = async () => {
-    if (!user || !taskUsageKey || !lastPointsKey) return;
+    if (!user || !taskUsageKey || !lastPointsKey || isDisabled || isCompleting) return;
     
-    let possiblePoints: number[];
-    if (points.includes('/')) {
-        possiblePoints = points.split('/').map(p => parseInt(p.trim(), 10));
-    } else if (points.toLowerCase().includes('up to')) {
-        const max = parseInt(points.replace(/[^0-9]/g, ''), 10);
-        possiblePoints = [Math.floor(Math.random() * max) + 1];
-    } else {
-        possiblePoints = [parseInt(points, 10) || 10];
-    }
-    const finalEarnedPoints = possiblePoints[Math.floor(Math.random() * possiblePoints.length)] || possiblePoints[0];
-
-    contextUpdatePoints(finalEarnedPoints);
-    await updateUserPoints(user.id, finalEarnedPoints);
+    setIsCompleting(true);
     
-    await addPointTransaction({
-        userId: user.id,
-        task: title,
-        points: finalEarnedPoints,
-        date: new Date().toISOString(),
-    });
+    try {
+        let possiblePoints: number[];
+        if (points.includes('/')) {
+            possiblePoints = points.split('/').map(p => parseInt(p.trim(), 10));
+        } else if (points.toLowerCase().includes('up to')) {
+            const max = parseInt(points.replace(/[^0-9]/g, ''), 10);
+            possiblePoints = [Math.floor(Math.random() * max) + 1];
+        } else {
+            possiblePoints = [parseInt(points, 10) || 10];
+        }
+        const finalEarnedPoints = possiblePoints[Math.floor(Math.random() * possiblePoints.length)] || possiblePoints[0];
 
-    toast({
-      title: 'Task Complete!',
-      description: `You earned ${finalEarnedPoints} points from ${title}.`,
-    });
-    
-    const usageDataString = localStorage.getItem(taskUsageKey);
-    let newCount = 1;
-    let newUsageData;
+        await updateUserPoints(user.id, finalEarnedPoints);
+        contextUpdatePoints(finalEarnedPoints);
+        
+        await addPointTransaction({
+            userId: user.id,
+            task: title,
+            points: finalEarnedPoints,
+            date: new Date().toISOString(),
+        });
 
-    if (usageDataString) {
-        const usageData = JSON.parse(usageDataString);
-        newCount = usageData.count + 1;
-        newUsageData = { ...usageData, count: newCount };
-    } else {
-        newUsageData = {
-            count: 1,
-            firstCompletionTimestamp: new Date().toISOString()
-        };
-    }
-    
-    localStorage.setItem(taskUsageKey, JSON.stringify(newUsageData));
-    localStorage.setItem(lastPointsKey, String(finalEarnedPoints));
-    setEarnedPoints(finalEarnedPoints);
-    setCompletions(newCount);
+        toast({
+        title: 'Task Complete!',
+        description: `You earned ${finalEarnedPoints} points from ${title}.`,
+        });
+        
+        let newCount = 1;
+        try {
+            const usageDataString = localStorage.getItem(taskUsageKey);
+            if (usageDataString) {
+                const usageData = JSON.parse(usageDataString);
+                newCount = usageData.count + 1;
+                const newUsageData = { ...usageData, count: newCount };
+                localStorage.setItem(taskUsageKey, JSON.stringify(newUsageData));
+            } else {
+                const newUsageData = {
+                    count: 1,
+                    firstCompletionTimestamp: new Date().toISOString()
+                };
+                localStorage.setItem(taskUsageKey, JSON.stringify(newUsageData));
+            }
+        } catch (error) {
+             console.error("Error updating task usage data:", error);
+        }
+        
+        localStorage.setItem(lastPointsKey, String(finalEarnedPoints));
+        setEarnedPoints(finalEarnedPoints);
+        setCompletions(newCount);
 
-    if (newCount >= limitPerDay) {
-        setIsDisabled(true);
-        const twentyFourHours = 24 * 60 * 60 * 1000;
-        setTimeLeft(twentyFourHours);
+        if (newCount >= limitPerDay) {
+            setIsDisabled(true);
+            const twentyFourHours = 24 * 60 * 60 * 1000;
+            setTimeLeft(twentyFourHours);
+        }
+    } catch (error) {
+        console.error("Failed to complete task:", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not complete the task. Please try again."
+        });
+    } finally {
+        setIsCompleting(false);
     }
   };
 
@@ -200,15 +215,18 @@ export function TaskCard({ id, title, description, points, icon, color, actionTe
                 </>
             )}
              <div className="w-full pt-2">
-              {isDisabled ? (
+              {isDisabled || isCompleting ? (
                   <Button disabled className="w-full bg-white/20 text-white/70 backdrop-blur-sm">
-                      {timeLeft > 0 ? (
-                        <>
-                            <Timer className="mr-2 h-4 w-4" />
-                            {formatTime(timeLeft)}
-                        </>
-                      ) : (
-                        'Unavailable'
+                      {isCompleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      {isCompleting ? 'Processing...' : (
+                        timeLeft > 0 ? (
+                            <>
+                                <Timer className="mr-2 h-4 w-4" />
+                                {formatTime(timeLeft)}
+                            </>
+                        ) : (
+                            'Unavailable'
+                        )
                       )}
                   </Button>
                   ) : (
