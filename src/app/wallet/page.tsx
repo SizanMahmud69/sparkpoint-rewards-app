@@ -19,8 +19,9 @@ export default function WalletPage() {
             <div className="space-y-8">
               <h1 className="text-3xl font-bold font-headline">My Wallet</h1>
               
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                <div className="lg:col-span-1 space-y-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                   <Card className="shadow-lg hover:shadow-xl transition-shadow">
                     <CardHeader className="flex flex-row items-center gap-4 p-5">
                        <div className="p-3 bg-primary/10 rounded-lg">
@@ -48,7 +49,7 @@ export default function WalletPage() {
                   </Card>
                 </div>
 
-                <div className="lg:col-span-2">
+                <div>
                   <Tabs defaultValue="withdraw" className="w-full">
                     <TabsList className="grid w-full grid-cols-3">
                       <TabsTrigger value="withdraw">Withdraw Points</TabsTrigger>
