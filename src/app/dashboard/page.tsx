@@ -61,10 +61,10 @@ export default function DashboardPage() {
           {otherTasks.map((task) => (
             <TaskCard key={task.id} {...task} />
           ))}
+          {spinWheelTask && (
+            <SpinWheelTask task={spinWheelTask} />
+          )}
         </div>
-        {spinWheelTask && (
-            <SpinWheelTask />
-        )}
       </section>
 
     </div>

@@ -5,8 +5,11 @@ import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Dices, Timer } from 'lucide-react';
+import { Timer } from 'lucide-react';
 import { useUserPoints } from '@/context/UserPointsContext';
+import { cn } from '@/lib/utils';
+import type { Task } from '@/lib/types';
+import { addPointTransaction } from '@/lib/storage';
 
 const segments = [
     { color: '#a0c4ff', label: '10' },
@@ -23,9 +26,9 @@ const conicGradient = `conic-gradient(from -22.5deg, ${segments.map((s, i) => `$
 
 const taskKey = 'spin_wheel_cooldown';
 
-export function SpinWheelTask() {
+export function SpinWheelTask({ task }: { task: Task }) {
+    const { user, updatePoints } = useUserPoints();
     const { toast } = useToast();
-    const { updatePoints } = useUserPoints();
     const [isSpinning, setIsSpinning] = useState(false);
     const [rotation, setRotation] = useState(0);
     const [isCooldown, setIsCooldown] = useState(false);
@@ -58,7 +61,7 @@ export function SpinWheelTask() {
 
 
     const handleSpin = () => {
-        if (isSpinning || isCooldown) return;
+        if (isSpinning || isCooldown || !user) return;
         setIsSpinning(true);
         const randomSpins = Math.floor(Math.random() * 5) + 5;
         const stopAngle = Math.floor(Math.random() * 360);
@@ -73,6 +76,12 @@ export function SpinWheelTask() {
         setTimeout(() => {
             const earnedPoints = parseInt(prize.label, 10);
             updatePoints(earnedPoints);
+            addPointTransaction({
+                userId: user.id,
+                task: task.title,
+                points: earnedPoints,
+                date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+            });
             toast({
                 title: 'Congratulations!',
                 description: `You won ${prize.label} points!`,
@@ -95,26 +104,24 @@ export function SpinWheelTask() {
     };
 
     return (
-        <div className="flex justify-center w-full">
-            <Card className="p-6 flex flex-col items-center justify-center space-y-6 shadow-lg rounded-2xl w-full max-w-md">
-                <div className="flex items-center gap-3 self-start">
-                    <Dices className="w-8 h-8 text-yellow-500" />
-                    <div>
-                        <h3 className="font-bold font-headline text-2xl">Spin the Wheel</h3>
-                        <p className="text-sm text-muted-foreground">Try your luck to win big rewards!</p>
-                    </div>
-                </div>
-
-                <div className="relative w-64 h-64 sm:w-72 sm:h-72">
-                    <div className="absolute top-1/2 -right-3 sm:-right-4 -translate-y-1/2 w-0 h-0 z-10
-                        border-t-8 border-t-transparent
-                        border-b-8 border-b-transparent
-                        border-l-[16px] border-l-slate-800"
+        <Card className={cn(
+            "p-0 overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1"
+        )}>
+            <div className={cn(
+                "flex flex-col text-center items-center p-4 space-y-3 h-full",
+                task.color,
+                "text-white"
+            )}>
+                <div className="relative w-32 h-32 sm:w-36 sm:h-36">
+                    <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-0 h-0 z-10
+                        border-t-4 border-t-transparent
+                        border-b-4 border-b-transparent
+                        border-l-[8px] border-l-slate-800"
                         style={{ filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.3))' }}>
                     </div>
                     
                     <div
-                        className="w-full h-full rounded-full border-8 border-slate-800 shadow-inner relative"
+                        className="w-full h-full rounded-full border-4 border-slate-800 shadow-inner relative"
                         style={{
                             transform: `rotate(${rotation}deg)`,
                             background: conicGradient,
@@ -124,14 +131,14 @@ export function SpinWheelTask() {
                         {segments.map((segment, index) => {
                             const angle = (index * 45) + (45/2);
                             const angleRad = angle * (Math.PI / 180);
-                            const radius = 90;
+                            const radius = 40;
                             const x = Math.cos(angleRad) * radius;
                             const y = Math.sin(angleRad) * radius;
                             
                             return (
                                 <div
                                     key={index}
-                                    className="absolute top-1/2 left-1/2 flex items-center justify-center text-slate-800 font-bold text-xl"
+                                    className="absolute top-1/2 left-1/2 flex items-center justify-center text-slate-800 font-bold text-xs"
                                     style={{
                                         width: 0,
                                         height: 0,
@@ -145,19 +152,30 @@ export function SpinWheelTask() {
                     </div>
                 </div>
 
-                <Button onClick={handleSpin} disabled={isSpinning || isCooldown} size="lg" className="w-full max-w-sm bg-slate-800 hover:bg-slate-700 text-lg font-bold">
-                    {isCooldown ? (
-                        <>
-                            <Timer className="mr-2 h-5 w-5" />
-                            {formatTime(timeLeft)}
-                        </>
-                    ) : isSpinning ? (
-                        'Spinning...'
-                    ) : (
-                        'Spin for a Prize'
-                    )}
-                </Button>
-            </Card>
-        </div>
+                <div className="flex-grow">
+                    <h3 className="font-headline text-lg">{task.title}</h3>
+                    <p className="text-sm text-white/70">{task.description}</p>
+                </div>
+                
+                <div className="bg-white/20 rounded-full px-4 py-1 text-sm font-bold">
+                    {task.points} Points
+                </div>
+
+                <div className="w-full pt-1">
+                    <Button onClick={handleSpin} disabled={isSpinning || isCooldown} className="w-full bg-white text-primary font-bold hover:bg-white/90">
+                        {isCooldown ? (
+                            <span className="flex items-center">
+                                <Timer className="mr-2 h-4 w-4" />
+                                {formatTime(timeLeft)}
+                            </span>
+                        ) : isSpinning ? (
+                            'Spinning...'
+                        ) : (
+                            task.actionText
+                        )}
+                    </Button>
+                </div>
+            </div>
+        </Card>
     );
 }
