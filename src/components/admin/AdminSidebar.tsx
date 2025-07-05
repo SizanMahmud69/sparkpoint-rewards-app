@@ -21,7 +21,7 @@ const navItems = [
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/withdrawals', label: 'Withdrawals', icon: CreditCard },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
-  { href: '/admin/content', label: 'Content', icon: FileText },
+  { href: '/admin/footer', label: 'Footer', icon: FileText },
 ];
 
 export function AdminSidebar() {
