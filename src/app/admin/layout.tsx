@@ -1,6 +1,7 @@
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { SidebarProvider, Sidebar } from '@/components/ui/sidebar';
+import Link from 'next/link';
 
 export default function AdminLayout({
   children,
@@ -19,8 +20,12 @@ export default function AdminLayout({
                 <main className="flex-1 p-4 sm:p-6 md:p-8">
                     {children}
                 </main>
-                <footer className="w-full py-4 mt-auto bg-card border-t">
+                <footer className="w-full py-6 mt-auto bg-card border-t">
                     <div className="container mx-auto text-center text-muted-foreground">
+                        <div className="flex flex-col sm:flex-row justify-center items-center gap-x-6 gap-y-2 mb-4">
+                            <Link href="/contact-us" className="text-sm hover:text-primary transition-colors">Contact Us</Link>
+                            <Link href="/privacy-policy" className="text-sm hover:text-primary transition-colors">Privacy Policy</Link>
+                        </div>
                         <p className="text-sm">
                             Copyright © {currentYear} SparkPoint. All Rights Reserved.
                         </p>
