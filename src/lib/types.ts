@@ -69,3 +69,11 @@ export type UserTaskCompletion = {
   count: number;
   lastEarnedPoints?: number;
 };
+
+export type SiteContent = {
+  id?: string;
+  contactEmail: string;
+  contactPhone: string;
+  contactAddress: string;
+  privacyPolicy: string;
+};

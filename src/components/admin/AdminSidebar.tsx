@@ -1,8 +1,9 @@
+
 "use client";
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, CreditCard, LogOut, Settings } from 'lucide-react';
+import { Home, Users, CreditCard, LogOut, Settings, FileText } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { 
   SidebarContent, 
@@ -21,6 +22,7 @@ const navItems = [
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/withdrawals', label: 'Withdrawals', icon: CreditCard },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
+  { href: '/admin/content', label: 'Content', icon: FileText },
 ];
 
 export function AdminSidebar() {

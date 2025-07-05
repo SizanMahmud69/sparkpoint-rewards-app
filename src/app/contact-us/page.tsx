@@ -1,10 +1,12 @@
 
-"use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getSiteContent } from "@/lib/storage";
 import { Mail, Phone, MapPin } from "lucide-react";
 
-export default function ContactUsPage() {
+export default async function ContactUsPage() {
+    const content = await getSiteContent();
+
     return (
         <Card className="max-w-4xl mx-auto">
             <CardHeader>
@@ -19,7 +21,7 @@ export default function ContactUsPage() {
                         <div>
                             <h3 className="font-semibold">Email</h3>
                             <p className="text-muted-foreground">For general inquiries and support, please email us at:</p>
-                            <a href="mailto:support@spark.point" className="text-primary hover:underline">support@spark.point</a>
+                            <a href={`mailto:${content.contactEmail}`} className="text-primary hover:underline">{content.contactEmail}</a>
                         </div>
                     </div>
                     <div className="flex items-start gap-4">
@@ -27,14 +29,14 @@ export default function ContactUsPage() {
                         <div>
                             <h3 className="font-semibold">Phone</h3>
                             <p className="text-muted-foreground">Our support line is open from 9 AM to 5 PM, Monday to Friday.</p>
-                            <a href="tel:+1234567890" className="text-primary hover:underline">+1 (234) 567-890</a>
+                            <a href={`tel:${content.contactPhone}`} className="text-primary hover:underline">{content.contactPhone}</a>
                         </div>
                     </div>
                     <div className="flex items-start gap-4">
                         <MapPin className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
                         <div>
                             <h3 className="font-semibold">Office Address</h3>
-                            <p className="text-muted-foreground">123 Spark Street, Reward City, 45678</p>
+                            <p className="text-muted-foreground">{content.contactAddress}</p>
                         </div>
                     </div>
                 </div>
