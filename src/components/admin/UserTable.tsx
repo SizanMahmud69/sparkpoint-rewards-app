@@ -20,13 +20,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal, PlusCircle, Search, RotateCw, FileText, Ban, UserCheck, Trash2, Snowflake } from 'lucide-react';
-import type { User } from '@/lib/types';
+import type { User, Notification } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { AddUserDialog } from './AddUserDialog';
-import { updateUserStatus, deleteUserAndData, addUser, resetUserTasks } from '@/lib/storage';
+import { updateUserStatus, deleteUserAndData, addUser, resetUserTasks, addNotification } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -75,6 +75,37 @@ export function UserTable({ users, onUsersUpdate, loading }: UserTableProps) {
 
   const handleStatusChange = async (id: string, name: string, newStatus: User['status']) => {
     await updateUserStatus(id, newStatus);
+
+    const notificationDate = new Date().toISOString();
+    let notificationTitle = '';
+    let notificationDescription = '';
+    let notificationType: Notification['type'] = 'info';
+
+    if (newStatus === 'Frozen') {
+        notificationTitle = 'Account Frozen';
+        notificationDescription = 'Your account has been temporarily frozen. You cannot complete tasks or make withdrawals.';
+        notificationType = 'error';
+    } else if (newStatus === 'Suspended') {
+        notificationTitle = 'Account Suspended';
+        notificationDescription = 'Your account has been suspended and is under review. Please contact support.';
+        notificationType = 'error';
+    } else if (newStatus === 'Active') {
+        notificationTitle = 'Account Reactivated';
+        notificationDescription = 'Your account has been reactivated. You can now resume all activities.';
+        notificationType = 'success';
+    }
+
+    if (notificationTitle) {
+        await addNotification({
+            userId: id,
+            title: notificationTitle,
+            description: notificationDescription,
+            type: notificationType,
+            read: false,
+            date: notificationDate,
+        });
+    }
+
     toast({
       title: `User ${newStatus}`,
       description: `User "${name}" has been ${newStatus.toLowerCase()}.`
