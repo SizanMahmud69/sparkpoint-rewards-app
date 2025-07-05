@@ -65,9 +65,6 @@ export function AdminSidebar() {
       <SidebarSeparator />
 
       <SidebarFooter className="p-2">
-        <div className="text-xs font-medium text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden">
-          Footer
-        </div>
         <SidebarMenuButton tooltip={{children: "Logout"}} asChild>
             <Link href="/">
                 <LogOut />
