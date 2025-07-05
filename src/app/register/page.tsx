@@ -1,3 +1,4 @@
+
 import { RegisterForm } from '@/components/auth/RegisterForm';
 import { Logo } from '@/components/Logo';
 import Link from 'next/link';
@@ -20,18 +21,15 @@ export default function RegisterPage() {
           </p>
         </div>
       </main>
-      <footer className="w-full py-6 mt-auto bg-card border-t">
-        <div className="container mx-auto text-center text-muted-foreground">
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-x-6 gap-y-2 mb-4">
-                <Link href="/contact-us" className="text-sm hover:text-primary transition-colors">Contact Us</Link>
-                <Link href="/privacy-policy" className="text-sm hover:text-primary transition-colors">Privacy Policy</Link>
+      <footer className="w-full py-4 mt-auto bg-card border-t">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center text-sm text-muted-foreground gap-2">
+            <p className="text-center sm:text-left">
+                Copyright © {currentYear} <span className="font-semibold text-primary">SparkPoint</span>. Developed by <span className="font-semibold text-primary">Black Diamond</span>.
+            </p>
+            <div className="flex items-center gap-x-4">
+                <Link href="/contact-us" className="hover:text-primary transition-colors">Contact Us</Link>
+                <Link href="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</Link>
             </div>
-            <p className="text-sm">
-                Copyright © {currentYear} SparkPoint. All Rights Reserved.
-            </p>
-            <p className="text-sm mt-1">
-                Designed & Developed by <span className="font-semibold text-primary">Black Diamond</span>
-            </p>
         </div>
       </footer>
     </div>
