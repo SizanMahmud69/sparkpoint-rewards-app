@@ -87,7 +87,7 @@ export function UserNav() {
                 <DropdownMenuSeparator />
                 {notifications.length > 0 ? (
                     notifications.slice(0, 5).map(notification => (
-                         <DropdownMenuItem key={notification.id} className={cn("p-2 focus:bg-accent/80 cursor-pointer", !notification.read && "bg-primary/10")}>
+                         <DropdownMenuItem key={notification.id} className={cn("p-2 focus:bg-accent/80", !notification.read && "bg-primary/10")}>
                            <div className='flex items-start gap-3'>
                                 <NotificationIcon type={notification.type} />
                                 <div>
@@ -103,8 +103,10 @@ export function UserNav() {
                     </div>
                 )}
                 <DropdownMenuSeparator />
-                 <DropdownMenuItem className="p-0">
-                    <Button variant="ghost" className="w-full h-auto py-2 text-sm text-center text-primary">View all notifications</Button>
+                 <DropdownMenuItem asChild>
+                    <Link href="/notifications" className="flex justify-center text-sm text-primary cursor-pointer hover:underline">
+                        View all notifications
+                    </Link>
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
